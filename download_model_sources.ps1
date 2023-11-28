@@ -1,6 +1,17 @@
 $stopwatch = [System.Diagnostics.Stopwatch]::startNew()
 
-$sourceDirectory = "R:\AI\LLM\source"
+Get-Content "./.env" | ForEach {
+
+    $name, $value = $_.split('=', 2)
+
+    if ([string]::IsNullOrWhiteSpace($name) -or $name.Contains('#')) {
+        return
+    }
+
+    Set-Content env:\$name $value
+}
+
+$sourceDirectory = $env:SOURCE_DIRECTORY
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 

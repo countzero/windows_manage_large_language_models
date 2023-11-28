@@ -1,35 +1,25 @@
 $stopwatch = [System.Diagnostics.Stopwatch]::startNew()
 
-$llamaCppDirectory = "D:\Privat\GitHub\windows_llama.cpp\vendor\llama.cpp"
-$sourceDirectory = "R:\AI\LLM\source"
-$targetDirectory = "R:\AI\LLM\gguf"
-$cacheDirectory = "E:\cache"
+Get-Content "./.env" | ForEach {
 
-$exclude = @()
+    $name, $value = $_.split('=', 2)
 
-$types = @(
-    # "q2_K"
-    # "q3_K"
-    # "q3_K_L"
-    # "q3_K_M"
-    # "q3_K_S"
-    # "q4_0"
-    # "q4_1"
-    # "q4_K"
-    "q4_K_M"
-    # "q4_K_S"
-    # "q5_0"
-    # "q5_1"
-    # "q5_K"
-    # "q5_K_M"
-    # "q5_K_S"
-    # "q6_K"
-    # "q8_0"
-)
+    if ([string]::IsNullOrWhiteSpace($name) -or $name.Contains('#')) {
+        return
+    }
+
+    Set-Content env:\$name $value
+}
+
+$llamaCppDirectory = $env:LLAMA_CPP_DIRECTORY
+$sourceDirectory = $env:SOURCE_DIRECTORY
+$targetDirectory = $env:TARGET_DIRECTORY
+$cacheDirectory = $env:CACHE_DIRECTORY
+$quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
-$repositoryDirectories = Get-ChildItem -Directory $sourceDirectory -Exclude $exclude -Name | Sort-Object $naturalSort
+$repositoryDirectories = Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort
 
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
 
@@ -46,11 +36,9 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
-    # We are creating the intermediate unquantized model in a dedicated cache directory
-    # so that it can be locatend on another drive to improve the quantization speed.
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.model-unquantized.gguf"
 
-    ForEach ($type in $types) {
+    ForEach ($type in $quantizationTypes) {
 
         $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "model-quantized-${type}.gguf"
 

@@ -1,0 +1,7 @@
+#
+# .gitignore
+#
+
+*.sublime-workspace
+
+.env
