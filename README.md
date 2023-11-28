@@ -80,7 +80,7 @@ QUANTIZATION_TYPES=q4_K_M,q2_K
 
 ## Usage
 
-### Clone a model
+### 1. Clone a model
 
 Clone a Git repository containing an LLM into the `SOURCE_DIRECTORY` without checking out any files and downloading any large files (lfs).
 
@@ -88,7 +88,7 @@ Clone a Git repository containing an LLM into the `SOURCE_DIRECTORY` without che
 git -C "./source" clone --no-checkout https://huggingface.co/microsoft/Orca-2-7b
 ```
 
-### Download model sources
+### 2. Download model sources
 
 Download all files across all Git repositories that are inside the `SOURCE_DIRECTORY`.
 
@@ -98,7 +98,7 @@ Download all files across all Git repositories that are inside the `SOURCE_DIREC
 
 **Hint:** This can also be used to update already existing sources from the remote repositories.
 
-### Quantize models
+### 3. Quantize model weights
 
 Quantize all model weights that are inside the `SOURCE_DIRECTORY` into the `TARGET_DIRECTORY` to create a specific `GGUF` file for each `QUANTIZATION_TYPES`.
 
