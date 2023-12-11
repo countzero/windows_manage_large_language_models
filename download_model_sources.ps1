@@ -28,7 +28,9 @@ ForEach ($repositoryDirectory in $repositoryDirectories) {
     Write-Host "Downloading ${repositoryOriginURI}..." -ForegroundColor "DarkYellow"
 
     Write-Host "Pruning incomplete large files..." -ForegroundColor "Yellow"
-    Remove-Item "${repositoryDirectoryPath}\.git\lfs\incomplete\*" -Recurse -Force
+    if (Test-Path -Path "${repositoryDirectoryPath}\.git\lfs\incomplete") {
+        Remove-Item "${repositoryDirectoryPath}\.git\lfs\incomplete\*" -Recurse -Force
+    }
 
     Write-Host "Resetting working directory..." -ForegroundColor "Yellow"
     git -C "${repositoryDirectoryPath}" reset --hard HEAD
