@@ -11,15 +11,17 @@ Get-Content "./.env" | ForEach {
     Set-Content env:\$name $value
 }
 
-$llamaCppDirectory = $env:LLAMA_CPP_DIRECTORY
-$sourceDirectory = $env:SOURCE_DIRECTORY
-$targetDirectory = $env:TARGET_DIRECTORY
-$cacheDirectory = $env:CACHE_DIRECTORY
+$llamaCppDirectory = Resolve-Path -Path $env:LLAMA_CPP_DIRECTORY
+$sourceDirectory = Resolve-Path -Path $env:SOURCE_DIRECTORY
+$targetDirectory = Resolve-Path -Path $env:TARGET_DIRECTORY
+$cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
-$repositoryDirectories = Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort
+$repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
+
+Write-Host $repositoryDirectories
 
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
 
@@ -46,16 +48,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Converting ${sourceDirectoryPath} to ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            $convertCommand = "${llamaCppDirectory}\convert.py --outfile $unquantizedModelPath $sourceDirectoryPath"
+            $convertCommand = "python ${llamaCppDirectory}\convert.py"
 
-            Invoke-Expression "python $convertCommand"
+            Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
         if (!(Test-Path -Path $quantizedModelPath)) {
 
-            $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
-
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
+
+            $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
 
             Invoke-Expression "$quantizeCommand $unquantizedModelPath $quantizedModelPath $type"
         }
