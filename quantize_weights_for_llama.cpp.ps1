@@ -59,7 +59,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
 
-            Invoke-Expression "$quantizeCommand $unquantizedModelPath $quantizedModelPath $type"
+            Invoke-Expression "$quantizeCommand `"${unquantizedModelPath}`" `"${quantizedModelPath}`" `"${type}`""
         }
     }
 
