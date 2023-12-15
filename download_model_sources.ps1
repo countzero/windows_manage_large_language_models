@@ -11,7 +11,7 @@ Get-Content "./.env" | ForEach {
     Set-Content env:\$name $value
 }
 
-$sourceDirectory = $env:SOURCE_DIRECTORY
+$sourceDirectory = Resolve-Path -Path $env:SOURCE_DIRECTORY
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
