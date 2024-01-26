@@ -55,28 +55,33 @@ CACHE_DIRECTORY=.\cache
 #
 # Possible llama.cpp quantization types:
 #
-#     Q2_K   :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
-#     Q3_K_S :  2.75G, +0.5551 ppl @ LLaMA-v1-7B
-#     Q3_K_M :  3.07G, +0.2496 ppl @ LLaMA-v1-7B
-#     Q3_K_L :  3.35G, +0.1764 ppl @ LLaMA-v1-7B
-#     Q4_0   :  3.56G, +0.2166 ppl @ LLaMA-v1-7B
-#     Q4_1   :  3.90G, +0.1585 ppl @ LLaMA-v1-7B
-#     Q4_K_S :  3.59G, +0.0992 ppl @ LLaMA-v1-7B
-#     Q4_K_M :  3.80G, +0.0532 ppl @ LLaMA-v1-7B
-#     Q5_0   :  4.33G, +0.0683 ppl @ LLaMA-v1-7B
-#     Q5_1   :  4.70G, +0.0349 ppl @ LLaMA-v1-7B
-#     Q5_K_S :  4.33G, +0.0400 ppl @ LLaMA-v1-7B
-#     Q5_K_M :  4.45G, +0.0122 ppl @ LLaMA-v1-7B
-#     Q6_K   :  5.15G, -0.0008 ppl @ LLaMA-v1-7B
-#     Q8_0   :  6.70G, +0.0004 ppl @ LLaMA-v1-7B
-#     F16    : 13.00G              @ 7B
-#     F32    : 26.00G              @ 7B
-#     COPY   : only copy tensors, no quantizing
+#     IQ2_XXS :  2.06 bpw quantization
+#     IQ2_XS  :  2.31 bpw quantization
+#     Q2_K    :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
+#     Q2_K_S  :  2.16G, +9.0634 ppl @ LLaMA-v1-7B
+#     Q3_K_XS :  3-bit extra small quantization
+#     Q3_K_S  :  2.75G, +0.5551 ppl @ LLaMA-v1-7B
+#     Q3_K_M  :  3.07G, +0.2496 ppl @ LLaMA-v1-7B
+#     Q3_K_L  :  3.35G, +0.1764 ppl @ LLaMA-v1-7B
+#     Q4_0    :  3.56G, +0.2166 ppl @ LLaMA-v1-7B
+#     Q4_1    :  3.90G, +0.1585 ppl @ LLaMA-v1-7B
+#     Q4_K_S  :  3.59G, +0.0992 ppl @ LLaMA-v1-7B
+#     Q4_K_M  :  3.80G, +0.0532 ppl @ LLaMA-v1-7B
+#     Q5_0    :  4.33G, +0.0683 ppl @ LLaMA-v1-7B
+#     Q5_1    :  4.70G, +0.0349 ppl @ LLaMA-v1-7B
+#     Q5_K_S  :  4.33G, +0.0400 ppl @ LLaMA-v1-7B
+#     Q5_K_M  :  4.45G, +0.0122 ppl @ LLaMA-v1-7B
+#     Q6_K    :  5.15G, -0.0008 ppl @ LLaMA-v1-7B
+#     Q8_0    :  6.70G, +0.0004 ppl @ LLaMA-v1-7B
+#     F16     : 13.00G              @ 7B
+#     F32     : 26.00G              @ 7B
+#     COPY    : only copy tensors, no quantizing
 #
-# Hint: The sweet spot is Q4_K_M.
+# Hint: The sweet spot is Q5_K_M.
 #
-QUANTIZATION_TYPES=q4_K_M,q2_K
+QUANTIZATION_TYPES=Q5_K_M,Q3_K_XS
 ```
+
 
 ## Usage
 
