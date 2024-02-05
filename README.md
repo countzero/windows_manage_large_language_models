@@ -38,8 +38,7 @@ Create the following `.env` file in the project directory. Make sure to change t
 # convert.py script and the quantize.exe binary.
 LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
 
-# Path to the training data needed for computing the importance
-# matrix to create the SOTA quants: IQ2_XXS, IQ2_XS and IQ3_XXS
+# Path to the training data for computing the importance matrix.
 TRAINING_DATA=C:\windows_llama.cpp\vendor\wikitext-2-raw-v1\wikitext-2-raw\wiki.train.raw
 
 # Path to the Git repositories containing the models.
