@@ -56,13 +56,17 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
-        if (("IQ2_XXS IQ2_XS IQ3_XXS".Contains($type)) -and !(Test-Path -Path $importanceMatrixPath)) {
+        # We do need to compute an importance matrix for 2-bit quantized models:
+        # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
+        $requiresImportanceMatrix = "IQ2_XXS IQ2_XS Q2_K_S".Contains($type)
+
+        if ($requiresImportanceMatrix -and !(Test-Path -Path $importanceMatrixPath)) {
 
             Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
 
-            $imatrixCommand = "${llamaCppDirectory}\build\bin\Release\imatrix.exe"
+            $matrixCommand = "${llamaCppDirectory}\build\bin\Release\imatrix.exe"
 
-            Invoke-Expression "$imatrixCommand -m `"${unquantizedModelPath}`" -f `"${trainingDataPath}`" -o `"${importanceMatrixPath}`""
+            Invoke-Expression "$matrixCommand -m `"${unquantizedModelPath}`" -f `"${trainingDataPath}`" -o `"${importanceMatrixPath}`" -ngl 99"
         }
 
         if (!(Test-Path -Path $quantizedModelPath)) {
@@ -70,6 +74,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
 
             $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
+
+            if ($requiresImportanceMatrix) {
+                $quantizeCommand = "${quantizeCommand} --imatrix=`"${importanceMatrixPath}`""
+            }
 
             Invoke-Expression "$quantizeCommand `"${unquantizedModelPath}`" `"${quantizedModelPath}`" `"${type}`""
         }
