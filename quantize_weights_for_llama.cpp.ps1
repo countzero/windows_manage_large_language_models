@@ -15,6 +15,8 @@ $llamaCppDirectory = Resolve-Path -Path $env:LLAMA_CPP_DIRECTORY
 $sourceDirectory = Resolve-Path -Path $env:SOURCE_DIRECTORY
 $targetDirectory = Resolve-Path -Path $env:TARGET_DIRECTORY
 $cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
+$trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
+$cleanCache = [System.Convert]::ToBoolean($env:CLEAN_CACHE)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
@@ -39,6 +41,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.model-unquantized.gguf"
+    $importanceMatrixPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
 
     ForEach ($type in $quantizationTypes) {
 
@@ -53,6 +56,15 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
+        if (("IQ2_XXS IQ2_XS IQ3_XXS".Contains($type)) -and !(Test-Path -Path $importanceMatrixPath)) {
+
+            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
+
+            $imatrixCommand = "${llamaCppDirectory}\build\bin\Release\imatrix.exe"
+
+            Invoke-Expression "$imatrixCommand -m `"${unquantizedModelPath}`" -f `"${trainingDataPath}`" -o `"${importanceMatrixPath}`""
+        }
+
         if (!(Test-Path -Path $quantizedModelPath)) {
 
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
@@ -63,10 +75,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
         }
     }
 
-    if ((Test-Path -Path $unquantizedModelPath)) {
+    if ($cleanCache -and (Test-Path -Path $unquantizedModelPath)) {
 
         Write-Host "Removing intermediate unquantized model ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
         Remove-Item "${unquantizedModelPath}" -Recurse -Force
+    }
+
+    if ($cleanCache -and (Test-Path -Path $importanceMatrixPath)) {
+
+        Write-Host "Removing intermediate unquantized model ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
+        Remove-Item "${importanceMatrixPath}" -Recurse -Force
     }
 }
 

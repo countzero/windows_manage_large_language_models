@@ -38,6 +38,10 @@ Create the following `.env` file in the project directory. Make sure to change t
 # convert.py script and the quantize.exe binary.
 LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
 
+# Path to the training data needed for computing the importance
+# matrix to create the SOTA quants: IQ2_XXS, IQ2_XS and IQ3_XXS
+TRAINING_DATA=C:\windows_llama.cpp\vendor\wikitext-2-raw-v1\wikitext-2-raw\wiki.train.raw
+
 # Path to the Git repositories containing the models.
 SOURCE_DIRECTORY=.\source
 
@@ -50,6 +54,9 @@ TARGET_DIRECTORY=.\gguf
 # physical drive to improve the quantization speed.
 CACHE_DIRECTORY=.\cache
 
+# Automatic removal of intermediate files in the cache directory.
+CLEAN_CACHE=True
+
 #
 # Comma separated list of quantization types.
 #
@@ -57,6 +64,7 @@ CACHE_DIRECTORY=.\cache
 #
 #     IQ2_XXS :  2.06 bpw quantization
 #     IQ2_XS  :  2.31 bpw quantization
+#     IQ3_XXS :  3.06 bpw quantization
 #     Q2_K    :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
 #     Q2_K_S  :  2.16G, +9.0634 ppl @ LLaMA-v1-7B
 #     Q3_K_XS :  3-bit extra small quantization
