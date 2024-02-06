@@ -6,7 +6,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 
 ## Features
 
-- Easy configuration via a `.env` file
+- Easy configuration via one `.env` file
 - Automates the synchronization of Git repositories containing large files (LFS)
 - Only fetches one LFS object at a time
 - Displays a progress indicator on downloading LFS objects
@@ -18,7 +18,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 
 ### Prerequisites
 
-Use https://github.com/countzero/windows_llama.cpp to compile a specific version of the [llama.cpp](https://github.com/ggerganov/llama.cpp) project on your machine.
+Use https://github.com/countzero/windows_llama.cpp to compile a specific version of the [llama.cpp](https://github.com/ggerganov/llama.cpp) project on your machine. This also makes training data available.
 
 
 ### Clone the repository from GitHub
@@ -35,8 +35,11 @@ Create the following `.env` file in the project directory. Make sure to change t
 
 ```Env
 # Path to the llama.cpp project that contains the
-# convert.py script and the quantize.exe binary.
+# required conversion and quantization programs.
 LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
+
+# Path to the training data for computing the importance matrix.
+TRAINING_DATA=C:\windows_llama.cpp\vendor\wikitext-2-raw-v1\wikitext-2-raw\wiki.train.raw
 
 # Path to the Git repositories containing the models.
 SOURCE_DIRECTORY=.\source
@@ -59,6 +62,7 @@ CACHE_DIRECTORY=.\cache
 #     IQ2_XS  :  2.31 bpw quantization
 #     Q2_K    :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
 #     Q2_K_S  :  2.16G, +9.0634 ppl @ LLaMA-v1-7B
+#     IQ3_XXS :  3.06 bpw quantization
 #     Q3_K_XS :  3-bit extra small quantization
 #     Q3_K_S  :  2.75G, +0.5551 ppl @ LLaMA-v1-7B
 #     Q3_K_M  :  3.07G, +0.2496 ppl @ LLaMA-v1-7B
@@ -77,9 +81,10 @@ CACHE_DIRECTORY=.\cache
 #     F32     : 26.00G              @ 7B
 #     COPY    : only copy tensors, no quantizing
 #
-# Hint: The sweet spot is Q5_K_M.
+# Hint: The sweet spot is Q5_K_M. The smallest quantization
+# without the need for an importance matrix is IQ3_XXS.
 #
-QUANTIZATION_TYPES=Q5_K_M,Q3_K_XS
+QUANTIZATION_TYPES=Q5_K_M,IQ3_XXS
 ```
 
 
