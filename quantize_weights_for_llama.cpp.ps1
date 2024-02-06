@@ -56,7 +56,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
-        # We do need to compute an importance matrix for 2-bit quantized models:
+        # We do need to compute an importance matrix for some 2-bit quantized models:
         # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
         $requiresImportanceMatrix = "IQ2_XXS IQ2_XS Q2_K_S".Contains($type)
 
@@ -76,23 +76,19 @@ ForEach ($repositoryName in $repositoryDirectories) {
             $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
 
             if ($requiresImportanceMatrix) {
-                $quantizeCommand = "${quantizeCommand} --imatrix=`"${importanceMatrixPath}`""
+                $quantizeCommand = "${quantizeCommand} --imatrix `"${importanceMatrixPath}`""
             }
 
             Invoke-Expression "$quantizeCommand `"${unquantizedModelPath}`" `"${quantizedModelPath}`" `"${type}`""
         }
     }
 
-    if ($cleanCache -and (Test-Path -Path $unquantizedModelPath)) {
+    # Note that we are not removing *.importance-matrix.dat files because
+    # they are relatively small but take a _very_ long time to compute.
+    if (Test-Path -Path $unquantizedModelPath) {
 
         Write-Host "Removing intermediate unquantized model ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
         Remove-Item "${unquantizedModelPath}" -Recurse -Force
-    }
-
-    if ($cleanCache -and (Test-Path -Path $importanceMatrixPath)) {
-
-        Write-Host "Removing intermediate unquantized model ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
-        Remove-Item "${importanceMatrixPath}" -Recurse -Force
     }
 }
 

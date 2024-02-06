@@ -6,7 +6,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 
 ## Features
 
-- Easy configuration via a `.env` file
+- Easy configuration via one `.env` file
 - Automates the synchronization of Git repositories containing large files (LFS)
 - Only fetches one LFS object at a time
 - Displays a progress indicator on downloading LFS objects
@@ -18,7 +18,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 
 ### Prerequisites
 
-Use https://github.com/countzero/windows_llama.cpp to compile a specific version of the [llama.cpp](https://github.com/ggerganov/llama.cpp) project on your machine.
+Use https://github.com/countzero/windows_llama.cpp to compile a specific version of the [llama.cpp](https://github.com/ggerganov/llama.cpp) project on your machine. This also makes training data available.
 
 
 ### Clone the repository from GitHub
@@ -35,7 +35,7 @@ Create the following `.env` file in the project directory. Make sure to change t
 
 ```Env
 # Path to the llama.cpp project that contains the
-# convert.py script and the quantize.exe binary.
+# required conversion and quantization programs.
 LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
 
 # Path to the training data for computing the importance matrix.
@@ -52,9 +52,6 @@ TARGET_DIRECTORY=.\gguf
 # Hint: Ideally this should be located on a different
 # physical drive to improve the quantization speed.
 CACHE_DIRECTORY=.\cache
-
-# Automatic removal of intermediate files in the cache directory.
-CLEAN_CACHE=True
 
 #
 # Comma separated list of quantization types.
@@ -84,9 +81,10 @@ CLEAN_CACHE=True
 #     F32     : 26.00G              @ 7B
 #     COPY    : only copy tensors, no quantizing
 #
-# Hint: The sweet spot is Q5_K_M.
+# Hint: The sweet spot is Q5_K_M. The smallest quantization
+# without the need for an importance matrix is IQ3_XXS.
 #
-QUANTIZATION_TYPES=Q5_K_M,Q3_K_XS
+QUANTIZATION_TYPES=Q5_K_M,IQ3_XXS
 ```
 
 
