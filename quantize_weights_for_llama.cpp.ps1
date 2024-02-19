@@ -45,7 +45,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     ForEach ($type in $quantizationTypes) {
 
-        $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "model-quantized-${type}.gguf"
+        $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
 
         if (!(Test-Path -Path $quantizedModelPath) -and !(Test-Path -Path $unquantizedModelPath)) {
 
