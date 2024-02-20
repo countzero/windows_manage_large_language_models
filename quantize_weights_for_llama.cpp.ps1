@@ -40,7 +40,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
-    $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.model-unquantized.gguf"
+    $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.unquantized.gguf"
     $importanceMatrixPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
 
     ForEach ($type in $quantizationTypes) {
