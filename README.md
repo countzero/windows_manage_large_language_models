@@ -95,7 +95,7 @@ QUANTIZATION_TYPES=Q5_K_M,IQ3_XXS
 Clone a Git repository containing an LLM into the `SOURCE_DIRECTORY` without checking out any files and downloading any large files (lfs).
 
 ```PowerShell
-git -C "./source" clone --no-checkout https://huggingface.co/microsoft/Orca-2-7b
+git -C "./source" clone --no-checkout https://huggingface.co/openchat/openchat-3.5-0106
 ```
 
 ### 2. Download model sources
