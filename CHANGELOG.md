@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2024-02-20
 
+### Added
+- Add fallback to 'convert-hf-to-gguf.py' to support novel model architectures
+- Add support for models with Byte Pair Encoding (BPE) vocabulary type
+
 ### Changed
 - Update documentation
 - Change filenames to match the de facto standard

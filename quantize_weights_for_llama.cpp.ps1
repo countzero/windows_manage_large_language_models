@@ -53,7 +53,19 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             $convertCommand = "python ${llamaCppDirectory}\convert.py"
 
-            Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
+            $convertParameters = "--outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
+
+            Invoke-Expression "$convertCommand $convertParameters"
+
+            # Some model architectures have not yet been backported into
+            # the official 'convert.py' script. We are assuming, that
+            # novel model architectures (e.g., Phi-2) are implemented
+            # in the 'convert-hf-to-gguf.py' script instead.
+            if (!(Test-Path -Path $unquantizedModelPath)) {
+                Write-Host "Conversion with 'convert.py' failed, trying 'convert-hf-to-gguf.py' instead..." -ForegroundColor "DarkYellow"
+                $convertCommand = "python ${llamaCppDirectory}\convert-hf-to-gguf.py"
+                Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
+            }
         }
 
         # We do need to compute an importance matrix for some 2-bit quantized models:
