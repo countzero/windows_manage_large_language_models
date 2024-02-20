@@ -55,6 +55,11 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             $convertParameters = "--outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
 
+            # Some models have a Byte Pair Encoding (BPE) vocabulary type.
+            if (@("Smaug-72B-v0.1").Contains($repositoryName)) {
+                $convertParameters = "--vocab-type `"bpe`" --pad-vocab $convertParameters"
+            }
+
             Invoke-Expression "$convertCommand $convertParameters"
 
             # Some model architectures have not yet been backported into
