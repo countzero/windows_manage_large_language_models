@@ -40,8 +40,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
-    $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.unquantized.gguf"
+    $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.gguf"
     $importanceMatrixPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
+
+    # If a repository already contains an unquantized GGUF file we are using it directly.
+    $unquantizedModelPathFromSource = Join-Path -Path $sourceDirectory -ChildPath $repositoryName | Join-Path -ChildPath "${repositoryName}.gguf"
+    $unqantizedModelAvailableInSource = (Test-Path -Path $unquantizedModelPathFromSource)
+    if ($unqantizedModelAvailableInSource) {
+        Write-Host "Found unquantized model $unquantizedModelPathFromSource in source, skipping conversion..." -ForegroundColor "DarkYellow"
+        $unquantizedModelPath = $unquantizedModelPathFromSource
+    }
 
     ForEach ($type in $quantizationTypes) {
 
@@ -100,13 +108,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
         }
     }
 
-    # Note that we are not removing *.importance-matrix.dat files because
-    # they are relatively small but take a _very_ long time to compute.
-    if (Test-Path -Path $unquantizedModelPath) {
+    # We are exclusively removing unqantized models we created.
+    # An unquantized model in the repository is left untouched.
+    if ((Test-Path -Path $unquantizedModelPath) -and !($unqantizedModelAvailableInSource)) {
 
         Write-Host "Removing intermediate unquantized model ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
         Remove-Item "${unquantizedModelPath}" -Recurse -Force
     }
+
+    # Note that we are not removing *.importance-matrix.dat files because
+    # they are relatively small but take a _very_ long time to compute.
 }
 
 $stopwatch.Stop()
