@@ -81,9 +81,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
             }
         }
 
-        # We do need to compute an importance matrix for some 2-bit quantized models:
+        # We need to compute an importance matrix for all i-quants and
+        # small k-quants to enhance the quality of the quantum models.
         # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
-        $requiresImportanceMatrix = "IQ2_XXS IQ2_XS Q2_K_S".Contains($type)
+        $requiresImportanceMatrix = $type.Contains("IQ") -or "Q2_K Q2_K_S".Contains($type)
 
         if ($requiresImportanceMatrix -and !(Test-Path -Path $importanceMatrixPath)) {
 
