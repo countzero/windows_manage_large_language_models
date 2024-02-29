@@ -89,9 +89,9 @@ CACHE_DIRECTORY=.\cache
 #             COPY    : only copy tensors, no quantizing
 #
 # Hint: The sweet spot is Q5_K_M. The smallest quantization
-# without the need for an importance matrix is IQ3_XXS.
+# without the need for an importance matrix is Q3_K_S.
 #
-QUANTIZATION_TYPES=Q5_K_M,IQ3_XXS
+QUANTIZATION_TYPES=Q5_K_M,Q3_K_S
 ```
 
 
