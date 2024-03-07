@@ -41,7 +41,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.gguf"
-    $importanceMatrixPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
+
+    # Note that we are not removing *.importance-matrix.dat files because
+    # they are relatively small but take a _very_ long time to compute.
+    $importanceMatrixPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.importance-matrix.dat"
 
     # If a repository already contains an unquantized GGUF file we are using it directly.
     $unquantizedModelPathFromSource = Join-Path -Path $sourceDirectory -ChildPath $repositoryName | Join-Path -ChildPath "${repositoryName}.gguf"
@@ -116,9 +119,6 @@ ForEach ($repositoryName in $repositoryDirectories) {
         Write-Host "Removing intermediate unquantized model ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
         Remove-Item "${unquantizedModelPath}" -Recurse -Force
     }
-
-    # Note that we are not removing *.importance-matrix.dat files because
-    # they are relatively small but take a _very_ long time to compute.
 }
 
 $stopwatch.Stop()
