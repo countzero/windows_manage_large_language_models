@@ -23,8 +23,6 @@ $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
 
-Write-Host $repositoryDirectories
-
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
 
 conda activate llama.cpp
