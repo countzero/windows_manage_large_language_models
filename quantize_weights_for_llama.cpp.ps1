@@ -60,26 +60,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Converting ${sourceDirectoryPath} to ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            $convertCommand = "python ${llamaCppDirectory}\convert.py"
-
-            $convertParameters = "--outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
-
-            # Some models have a Byte Pair Encoding (BPE) vocabulary type.
-            if (@("Smaug-72B-v0.1").Contains($repositoryName)) {
-                $convertParameters = "--vocab-type `"bpe`" --pad-vocab $convertParameters"
-            }
-
-            Invoke-Expression "$convertCommand $convertParameters"
-
-            # Some model architectures have not yet been backported into
-            # the official 'convert.py' script. We are assuming, that
-            # novel model architectures (e.g., Phi-2) are implemented
-            # in the 'convert-hf-to-gguf.py' script instead.
-            if (!(Test-Path -Path $unquantizedModelPath)) {
-                Write-Host "Conversion with 'convert.py' failed, trying 'convert-hf-to-gguf.py' instead..." -ForegroundColor "DarkYellow"
-                $convertCommand = "python ${llamaCppDirectory}\convert-hf-to-gguf.py"
-                Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
-            }
+            $convertCommand = "python ${llamaCppDirectory}\convert-hf-to-gguf.py"
+            Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
         # We need to compute an importance matrix for all i-quants and
