@@ -73,7 +73,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
 
-            $matrixCommand = "${llamaCppDirectory}\build\bin\Release\imatrix.exe"
+            $matrixCommand = "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe"
 
             Invoke-Expression "$matrixCommand -m `"${unquantizedModelPath}`" -f `"${trainingDataPath}`" -o `"${importanceMatrixPath}`" -ngl 99"
         }
@@ -82,7 +82,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\quantize.exe"
+            $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe"
 
             if ($requiresImportanceMatrix) {
                 $quantizeCommand = "${quantizeCommand} --imatrix `"${importanceMatrixPath}`""
