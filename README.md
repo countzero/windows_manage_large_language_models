@@ -67,6 +67,7 @@ CACHE_DIRECTORY=.\cache
 #     28  or  IQ2_S   :  2.5  bpw quantization
 #     29  or  IQ2_M   :  2.7  bpw quantization
 #     24  or  IQ1_S   :  1.56 bpw quantization
+#     31  or  IQ1_M   :  1.75 bpw quantization
 #     10  or  Q2_K    :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
 #     21  or  Q2_K_S  :  2.16G, +9.0634 ppl @ LLaMA-v1-7B
 #     23  or  IQ3_XXS :  3.06 bpw quantization
@@ -84,7 +85,8 @@ CACHE_DIRECTORY=.\cache
 #     17  or  Q5_K_M  :  4.45G, +0.0122 ppl @ LLaMA-v1-7B
 #     18  or  Q6_K    :  5.15G, +0.0008 ppl @ LLaMA-v1-7B
 #      7  or  Q8_0    :  6.70G, +0.0004 ppl @ LLaMA-v1-7B
-#      1  or  F16     : 13.00G              @ 7B
+#      1  or  F16     : 14.00G, -0.0020 ppl @ Mistral-7B
+#     32  or  BF16    : 14.00G, -0.0050 ppl @ Mistral-7B
 #      0  or  F32     : 26.00G              @ 7B
 #             COPY    : only copy tensors, no quantizing
 #
