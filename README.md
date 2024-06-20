@@ -53,6 +53,9 @@ TARGET_DIRECTORY=.\gguf
 # physical drive to improve the quantization speed.
 CACHE_DIRECTORY=.\cache
 
+# Path to the directory for importance matrix files.
+IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
+
 #
 # Comma separated list of quantization types.
 #
@@ -106,7 +109,7 @@ QUANTIZATION_TYPES=Q5_K_M,Q3_K_S
 Clone a Git repository containing an LLM into the `SOURCE_DIRECTORY` without checking out any files and downloading any large files (lfs).
 
 ```PowerShell
-git -C "./source" clone --no-checkout https://huggingface.co/openchat/openchat-3.5-0106
+git -C "./source" clone --no-checkout https://huggingface.co/openchat/openchat-3.6-8b-20240522
 ```
 
 ### 2. Download model sources

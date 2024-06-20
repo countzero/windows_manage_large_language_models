@@ -14,6 +14,7 @@ Get-Content "./.env" | ForEach {
 $llamaCppDirectory = Resolve-Path -Path $env:LLAMA_CPP_DIRECTORY
 $sourceDirectory = Resolve-Path -Path $env:SOURCE_DIRECTORY
 $targetDirectory = Resolve-Path -Path $env:TARGET_DIRECTORY
+$importanceMatrixDirectory = Resolve-Path -Path $env:IMPORTANCE_MATRIX_DIRECTORY
 $cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
 $trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
 $cleanCache = [System.Convert]::ToBoolean($env:CLEAN_CACHE)
@@ -42,7 +43,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     # Note that we are not removing *.importance-matrix.dat files because
     # they are relatively small but take a _very_ long time to compute.
-    $importanceMatrixPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.importance-matrix.dat"
+    $importanceMatrixPath = Join-Path -Path $importanceMatrixDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
 
     # If a repository already contains an unquantized GGUF file we are using it directly.
     $unquantizedModelPathFromSource = Join-Path -Path $sourceDirectory -ChildPath $repositoryName | Join-Path -ChildPath "${repositoryName}.gguf"
@@ -64,8 +65,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
         }
 
-        # We need to compute an importance matrix for all i-quants and
-        # small k-quants to enhance the quality of the quantum models.
+        # We need to compute an importance matrix for all i-quants
+        # and small k-quants to enhance the quality of the models.
         # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
         $requiresImportanceMatrix = $type.Contains("IQ") -or "Q2_K Q2_K_S".Contains($type)
 
@@ -84,7 +85,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe"
 
-            if ($requiresImportanceMatrix) {
+            # If an importance matrix file is available we are using it.
+            if (Test-Path -Path $importanceMatrixPath) {
                 $quantizeCommand = "${quantizeCommand} --imatrix `"${importanceMatrixPath}`""
             }
 
