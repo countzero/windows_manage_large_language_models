@@ -17,6 +17,7 @@ $targetDirectory = Resolve-Path -Path $env:TARGET_DIRECTORY
 $importanceMatrixDirectory = Resolve-Path -Path $env:IMPORTANCE_MATRIX_DIRECTORY
 $cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
 $trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
+$trainingDataChunkOffset = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNK_OFFSET)
 $cleanCache = [System.Convert]::ToBoolean($env:CLEAN_CACHE)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 
@@ -61,8 +62,9 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Converting ${sourceDirectoryPath} to ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            $convertCommand = "python ${llamaCppDirectory}\convert-hf-to-gguf.py"
-            Invoke-Expression "$convertCommand --outfile `"${unquantizedModelPath}`" `"${sourceDirectoryPath}`""
+            Invoke-Expression "python ${llamaCppDirectory}\convert-hf-to-gguf.py ``
+                --outfile '${unquantizedModelPath}' ``
+                '${sourceDirectoryPath}'"
         }
 
         # We need to compute an importance matrix for all i-quants
@@ -74,9 +76,12 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
 
-            $matrixCommand = "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe"
-
-            Invoke-Expression "$matrixCommand -m `"${unquantizedModelPath}`" -f `"${trainingDataPath}`" -o `"${importanceMatrixPath}`" -ngl 99"
+            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
+                --model '${unquantizedModelPath}' ``
+                --file '${trainingDataPath}' ``
+                --output '${importanceMatrixPath}' ``
+                --chunk ${trainingDataChunkOffset} ``
+                --gpu-layers 999"
         }
 
         if (!(Test-Path -Path $quantizedModelPath)) {
@@ -87,10 +92,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             # If an importance matrix file is available we are using it.
             if (Test-Path -Path $importanceMatrixPath) {
-                $quantizeCommand = "${quantizeCommand} --imatrix `"${importanceMatrixPath}`""
+                $quantizeCommand = "${quantizeCommand} --imatrix '${importanceMatrixPath}'"
             }
 
-            Invoke-Expression "$quantizeCommand `"${unquantizedModelPath}`" `"${quantizedModelPath}`" `"${type}`""
+            Invoke-Expression "$quantizeCommand '${unquantizedModelPath}' '${quantizedModelPath}' '${type}'"
         }
     }
 
