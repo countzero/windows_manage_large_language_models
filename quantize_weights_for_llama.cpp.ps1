@@ -67,12 +67,9 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 '${sourceDirectoryPath}'"
         }
 
-        # We need to compute an importance matrix for all i-quants
-        # and small k-quants to enhance the quality of the models.
+        # We are computing an importance matrix to enhance the quality of the quantum models.
         # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
-        $requiresImportanceMatrix = $type.Contains("IQ") -or "Q2_K Q2_K_S".Contains($type)
-
-        if ($requiresImportanceMatrix -and !(Test-Path -Path $importanceMatrixPath)) {
+        if (!(Test-Path -Path $importanceMatrixPath)) {
 
             Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
 
@@ -88,18 +85,15 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            $quantizeCommand = "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe"
-
-            # If an importance matrix file is available we are using it.
-            if (Test-Path -Path $importanceMatrixPath) {
-                $quantizeCommand = "${quantizeCommand} --imatrix '${importanceMatrixPath}'"
-            }
-
-            Invoke-Expression "$quantizeCommand '${unquantizedModelPath}' '${quantizedModelPath}' '${type}'"
+            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
+                --imatrix '${importanceMatrixPath}' ``
+                '${unquantizedModelPath}' ``
+                '${quantizedModelPath}' ``
+                '${type}'"
         }
     }
 
-    # We are exclusively removing unqantized models we created.
+    # We are exclusively removing unquantized models we created.
     # An unquantized model in the repository is left untouched.
     if ((Test-Path -Path $unquantizedModelPath) -and !($unqantizedModelAvailableInSource)) {
 
