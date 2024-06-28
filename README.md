@@ -41,21 +41,17 @@ LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
 # Path to the training data for computing the importance matrix.
 TRAINING_DATA=C:\windows_llama.cpp\vendor\wikitext-2-raw-v1\wikitext-2-raw\wiki.train.raw
 
-# Start processing the importance matrix starting from a specific chunk.
 # This can be used to significantly reduce the time to compute the
 # importance matrix without increasing the final perplexity. We are
-# using 200 chunks (~100k tokens) from the wiki.train.raw dataset.
+# using 20 chunks (~10k tokens) from the wiki.train.raw dataset.
 # @see https://github.com/ggerganov/llama.cpp/discussions/5263
-TRAINING_DATA_CHUNK_OFFSET=4558
+TRAINING_DATA_CHUNKS=20
 
 # Path to the Git repositories containing the models.
 SOURCE_DIRECTORY=.\source
 
 # Path to the quantized models in GGUF format.
 TARGET_DIRECTORY=.\gguf
-
-# Path to the directory containing the importance matrix files.
-IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 
 # Path to the cache directory for intermediate files.
 #

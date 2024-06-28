@@ -17,12 +17,10 @@ $targetDirectory = Resolve-Path -Path $env:TARGET_DIRECTORY
 $importanceMatrixDirectory = Resolve-Path -Path $env:IMPORTANCE_MATRIX_DIRECTORY
 $cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
 $trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
-$trainingDataChunkOffset = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNK_OFFSET)
-$cleanCache = [System.Convert]::ToBoolean($env:CLEAN_CACHE)
+$trainingDataChunks = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNKS)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
-
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
 
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
@@ -67,7 +65,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 '${sourceDirectoryPath}'"
         }
 
-        # We are computing an importance matrix to enhance the quality of the quantum models.
+        # We are computing an importance matrix to enhance the quality of the models.
         # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
         if (!(Test-Path -Path $importanceMatrixPath)) {
 
@@ -76,8 +74,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
                 --model '${unquantizedModelPath}' ``
                 --file '${trainingDataPath}' ``
+                --chunks ${trainingDataChunks} ``
                 --output '${importanceMatrixPath}' ``
-                --chunk ${trainingDataChunkOffset} ``
                 --gpu-layers 999"
         }
 
@@ -86,7 +84,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
 
             Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
-                --imatrix '${importanceMatrixPath}' ``
+                $(if (Test-Path -Path $importanceMatrixPath) {"--imatrix '${importanceMatrixPath}'"}) ``
                 '${unquantizedModelPath}' ``
                 '${quantizedModelPath}' ``
                 '${type}'"
