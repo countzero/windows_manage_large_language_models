@@ -54,6 +54,9 @@ SOURCE_DIRECTORY=.\source
 # Path to the quantized models in GGUF format.
 TARGET_DIRECTORY=.\gguf
 
+# Path to the directory containing the importance matrix files.
+IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
+
 # Path to the cache directory for intermediate files.
 #
 # Hint: Ideally this should be located on a different
