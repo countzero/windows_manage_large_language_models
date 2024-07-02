@@ -99,8 +99,8 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #      0  or  F32     : 26.00G              @ 7B
 #             COPY    : only copy tensors, no quantizing
 #
-# Hint: The sweet spot is Q5_K_M. The smallest quantization
-# without the need for an importance matrix is Q3_K_S.
+# Hint: The optimal quantization with minimal quality loss
+# is Q5_K_M. For the fastest interference choose Q4_1.
 #
 QUANTIZATION_TYPES=Q5_K_M,Q3_K_S
 ```
