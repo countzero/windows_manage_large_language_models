@@ -106,7 +106,7 @@ QUANTIZATION_TYPES=Q5_K_M,Q3_K_S
 ```
 
 > [!NOTE]
-> All i-quants (`IQ*`) and the small k-quants (`Q2_K` and `Q2_K_S`) require an importance matrix. This script will automatically compute an [importance matrix](https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix) for each model and use it for the quantization. The creation of an importance matrix takes many hours to complete!
+> All i-quants (`IQ*`) and the small k-quants (`Q2_K` and `Q2_K_S`) require an [importance matrix](https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix). Since an importance matrix is also improving the quality of larger quantization types this script will always automatically compute it for each model and use it for the quantization.
 
 ## Usage
 
