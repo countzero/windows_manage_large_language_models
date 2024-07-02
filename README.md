@@ -102,7 +102,7 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 # Hint: The optimal quantization with minimal quality loss
 # is Q5_K_M. For the fastest interference choose Q4_1.
 #
-QUANTIZATION_TYPES=Q5_K_M,Q3_K_S
+QUANTIZATION_TYPES=Q5_K_M,Q4_1,Q3_K_S
 ```
 
 > [!NOTE]
