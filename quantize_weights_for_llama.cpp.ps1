@@ -60,7 +60,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Write-Host "Converting ${sourceDirectoryPath} to ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
 
-            Invoke-Expression "python ${llamaCppDirectory}\convert-hf-to-gguf.py ``
+            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${unquantizedModelPath}' ``
                 '${sourceDirectoryPath}'"
         }
