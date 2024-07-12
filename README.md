@@ -103,8 +103,8 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #             COPY     : only copy tensors, no quantizing
 #
 # Hint: A very good quantization with minimal quality loss is
-# Q5_K_M. Quantization below 4-bit has measurable quality loss,
-# try to avoid going too low and use IQ4_XS as a minimum.
+# Q5_K_M. Quantization below 4-bit causes measurable quality
+# loss, try to avoid going too low and use IQ4_XS as a minimum.
 #
 # @see https://github.com/ggerganov/llama.cpp/tree/master/examples/perplexity
 #
