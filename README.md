@@ -105,10 +105,9 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 # Hint: A very good quantization with minimal quality loss is
 # Q5_K_M. Quantization below 4-bit causes measurable quality
 # loss, try to avoid going too low and use IQ4_XS as a minimum.
-#
 # @see https://github.com/ggerganov/llama.cpp/tree/master/examples/perplexity
 #
-QUANTIZATION_TYPES=Q5_K_M,Q4_1,Q3_K_S
+QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 ```
 
 > [!NOTE]
