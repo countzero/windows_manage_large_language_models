@@ -99,8 +99,9 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #      0  or  F32     : 26.00G              @ 7B
 #             COPY    : only copy tensors, no quantizing
 #
-# Hint: The optimal quantization with minimal quality loss
-# is Q5_K_M. For the fastest interference choose Q4_1.
+# Hint: A very good quantization with minimal quality loss is
+# Q5_K_M. Quantization below 4-bit has measurable quality loss,
+# try to avoid going too low and use IQ4_XS as a minimum.
 #
 QUANTIZATION_TYPES=Q5_K_M,Q4_1,Q3_K_S
 ```
