@@ -67,41 +67,46 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #
 # Possible llama.cpp quantization types:
 #
-#      2  or  Q4_0    :  3.56G, +0.2166 ppl @ LLaMA-v1-7B
-#      3  or  Q4_1    :  3.90G, +0.1585 ppl @ LLaMA-v1-7B
-#      8  or  Q5_0    :  4.33G, +0.0683 ppl @ LLaMA-v1-7B
-#      9  or  Q5_1    :  4.70G, +0.0349 ppl @ LLaMA-v1-7B
-#     19  or  IQ2_XXS :  2.06 bpw quantization
-#     20  or  IQ2_XS  :  2.31 bpw quantization
-#     28  or  IQ2_S   :  2.5  bpw quantization
-#     29  or  IQ2_M   :  2.7  bpw quantization
-#     24  or  IQ1_S   :  1.56 bpw quantization
-#     31  or  IQ1_M   :  1.75 bpw quantization
-#     10  or  Q2_K    :  2.63G, +0.6717 ppl @ LLaMA-v1-7B
-#     21  or  Q2_K_S  :  2.16G, +9.0634 ppl @ LLaMA-v1-7B
-#     23  or  IQ3_XXS :  3.06 bpw quantization
-#     26  or  IQ3_S   :  3.44 bpw quantization
-#     27  or  IQ3_M   :  3.66 bpw quantization mix
-#     22  or  IQ3_XS  :  3.3 bpw quantization
-#     11  or  Q3_K_S  :  2.75G, +0.5551 ppl @ LLaMA-v1-7B
-#     12  or  Q3_K_M  :  3.07G, +0.2496 ppl @ LLaMA-v1-7B
-#     13  or  Q3_K_L  :  3.35G, +0.1764 ppl @ LLaMA-v1-7B
-#     25  or  IQ4_NL  :  4.50 bpw non-linear quantization
-#     30  or  IQ4_XS  :  4.25 bpw non-linear quantization
-#     14  or  Q4_K_S  :  3.59G, +0.0992 ppl @ LLaMA-v1-7B
-#     15  or  Q4_K_M  :  3.80G, +0.0532 ppl @ LLaMA-v1-7B
-#     16  or  Q5_K_S  :  4.33G, +0.0400 ppl @ LLaMA-v1-7B
-#     17  or  Q5_K_M  :  4.45G, +0.0122 ppl @ LLaMA-v1-7B
-#     18  or  Q6_K    :  5.15G, +0.0008 ppl @ LLaMA-v1-7B
-#      7  or  Q8_0    :  6.70G, +0.0004 ppl @ LLaMA-v1-7B
-#      1  or  F16     : 14.00G, -0.0020 ppl @ Mistral-7B
-#     32  or  BF16    : 14.00G, -0.0050 ppl @ Mistral-7B
-#      0  or  F32     : 26.00G              @ 7B
-#             COPY    : only copy tensors, no quantizing
+#      2  or  Q4_0     :  4.34G, +0.4685 ppl @ Llama-3-8B
+#      3  or  Q4_1     :  4.78G, +0.4511 ppl @ Llama-3-8B
+#      8  or  Q5_0     :  5.21G, +0.1316 ppl @ Llama-3-8B
+#      9  or  Q5_1     :  5.65G, +0.1062 ppl @ Llama-3-8B
+#     19  or  IQ2_XXS  :  2.06 bpw quantization
+#     20  or  IQ2_XS   :  2.31 bpw quantization
+#     28  or  IQ2_S    :  2.5  bpw quantization
+#     29  or  IQ2_M    :  2.7  bpw quantization
+#     24  or  IQ1_S    :  1.56 bpw quantization
+#     31  or  IQ1_M    :  1.75 bpw quantization
+#     10  or  Q2_K     :  2.96G, +3.5199 ppl @ Llama-3-8B
+#     21  or  Q2_K_S   :  2.96G, +3.1836 ppl @ Llama-3-8B
+#     23  or  IQ3_XXS  :  3.06 bpw quantization
+#     26  or  IQ3_S    :  3.44 bpw quantization
+#     27  or  IQ3_M    :  3.66 bpw quantization mix
+#     22  or  IQ3_XS   :  3.3 bpw quantization
+#     11  or  Q3_K_S   :  3.41G, +1.6321 ppl @ Llama-3-8B
+#     12  or  Q3_K_M   :  3.74G, +0.6569 ppl @ Llama-3-8B
+#     13  or  Q3_K_L   :  4.03G, +0.5562 ppl @ Llama-3-8B
+#     25  or  IQ4_NL   :  4.50 bpw non-linear quantization
+#     30  or  IQ4_XS   :  4.25 bpw non-linear quantization
+#     14  or  Q4_K_S   :  4.37G, +0.2689 ppl @ Llama-3-8B
+#     15  or  Q4_K_M   :  4.58G, +0.1754 ppl @ Llama-3-8B
+#     16  or  Q5_K_S   :  5.21G, +0.1049 ppl @ Llama-3-8B
+#     17  or  Q5_K_M   :  5.33G, +0.0569 ppl @ Llama-3-8B
+#     18  or  Q6_K     :  6.14G, +0.0217 ppl @ Llama-3-8B
+#      7  or  Q8_0     :  7.96G, +0.0026 ppl @ Llama-3-8B
+#     33  or  Q4_0_4_4 :  4.34G, +0.4685 ppl @ Llama-3-8B
+#     34  or  Q4_0_4_8 :  4.34G, +0.4685 ppl @ Llama-3-8B
+#     35  or  Q4_0_8_8 :  4.34G, +0.4685 ppl @ Llama-3-8B
+#      1  or  F16      : 14.00G, +0.0020 ppl @ Mistral-7B
+#     32  or  BF16     : 14.00G, -0.0050 ppl @ Mistral-7B
+#      0  or  F32      : 26.00G              @ 7B
+#             COPY     : only copy tensors, no quantizing
 #
 # Hint: A very good quantization with minimal quality loss is
 # Q5_K_M. Quantization below 4-bit has measurable quality loss,
 # try to avoid going too low and use IQ4_XS as a minimum.
+#
+# @see https://github.com/ggerganov/llama.cpp/tree/master/examples/perplexity
 #
 QUANTIZATION_TYPES=Q5_K_M,Q4_1,Q3_K_S
 ```
