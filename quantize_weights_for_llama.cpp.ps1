@@ -40,9 +40,9 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.gguf"
 
-    # Note that we are not removing *.importance-matrix.dat files because
+    # Note that we are not removing *.importance-matrix.gguf files because
     # they are relatively small but take a _very_ long time to compute.
-    $importanceMatrixPath = Join-Path -Path $importanceMatrixDirectory -ChildPath "${repositoryName}.importance-matrix.dat"
+    $importanceMatrixPath = Join-Path -Path $importanceMatrixDirectory -ChildPath "${repositoryName}.importance-matrix.gguf"
 
     # If a repository already contains an unquantized GGUF file we are using it directly.
     $unquantizedModelPathFromSource = Join-Path -Path $sourceDirectory -ChildPath $repositoryName | Join-Path -ChildPath "${repositoryName}.gguf"
@@ -66,10 +66,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
         }
 
         # We are computing an importance matrix to enhance the quality of the models.
-        # https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix
+        # https://github.com/ggml-org/llama.cpp/tree/master/tools/imatrix
         if (!(Test-Path -Path $importanceMatrixPath)) {
 
-            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath}..." -ForegroundColor "DarkYellow"
+            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on GPU..." -ForegroundColor "DarkYellow"
 
             Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
                 --model '${unquantizedModelPath}' ``
@@ -77,6 +77,19 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 --chunks ${trainingDataChunks} ``
                 --output '${importanceMatrixPath}' ``
                 --gpu-layers 999"
+        }
+
+        # We are falling back to CPU only importance matrix generation.
+        if (!(Test-Path -Path $importanceMatrixPath)) {
+
+            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on CPU..." -ForegroundColor "DarkYellow"
+
+            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
+                --model '${unquantizedModelPath}' ``
+                --file '${trainingDataPath}' ``
+                --chunks ${trainingDataChunks} ``
+                --output '${importanceMatrixPath}' ``
+                --gpu-layers 0"
         }
 
         if (!(Test-Path -Path $quantizedModelPath)) {
