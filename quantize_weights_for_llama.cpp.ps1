@@ -55,7 +55,6 @@ ForEach ($repositoryName in $repositoryDirectories) {
     ForEach ($type in $quantizationTypes) {
 
         $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
-        $multimodalProjectionPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.gguf"
 
         if (!(Test-Path -Path $quantizedModelPath) -and !(Test-Path -Path $unquantizedModelPath)) {
 
@@ -66,12 +65,17 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 '${sourceDirectoryPath}'"
         }
 
-        if (!(Test-Path -Path $multimodalProjectionPath)) {
+        $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.F16.gguf"
 
-            Write-Host "Creating multimodal projection model from ${unquantizedModelPath} to ${multimodalProjectionPath}..." -ForegroundColor "DarkYellow"
+        # We are computing a multimodal projector model in F16
+        # format for each model to enable vision capabilities.
+        if (!(Test-Path -Path $multimodalProjectorPath)) {
+
+            Write-Host "Creating multimodal projector model from ${unquantizedModelPath} to ${multimodalProjectorPath}..." -ForegroundColor "DarkYellow"
 
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
-                --outfile '${multimodalProjectionPath}' ``
+                --outfile '${multimodalProjectorPath}' ``
+                --outtype 'f16' ``
                 '${sourceDirectoryPath}' ``
                 --mmproj"
         }
