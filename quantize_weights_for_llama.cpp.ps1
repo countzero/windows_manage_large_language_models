@@ -55,6 +55,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
     ForEach ($type in $quantizationTypes) {
 
         $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
+        $multimodalProjectionPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.gguf"
 
         if (!(Test-Path -Path $quantizedModelPath) -and !(Test-Path -Path $unquantizedModelPath)) {
 
@@ -63,6 +64,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${unquantizedModelPath}' ``
                 '${sourceDirectoryPath}'"
+        }
+
+        if (!(Test-Path -Path $multimodalProjectionPath)) {
+
+            Write-Host "Creating multimodal projection model from ${unquantizedModelPath} to ${multimodalProjectionPath}..." -ForegroundColor "DarkYellow"
+
+            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
+                --outfile '${multimodalProjectionPath}' ``
+                '${sourceDirectoryPath}' ``
+                --mmproj"
         }
 
         # We are computing an importance matrix to enhance the quality of the models.
