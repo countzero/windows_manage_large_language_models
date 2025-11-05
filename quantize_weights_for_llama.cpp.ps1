@@ -52,6 +52,25 @@ ForEach ($repositoryName in $repositoryDirectories) {
         $unquantizedModelPath = $unquantizedModelPathFromSource
     }
 
+    # We are computing a multimodal projector model in BF16 format
+    # for current hardware and F32 format as a fallback for older
+    # hardware for each model to enable vision capabilities.
+    ForEach ($multimodalProjectorType in @('BF16', 'F32')) {
+
+        $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.${multimodalProjectorType}.gguf"
+
+        if (!(Test-Path -Path $multimodalProjectorPath)) {
+
+            Write-Host "Creating multimodal projector model from ${unquantizedModelPath} to ${multimodalProjectorPath}..." -ForegroundColor "DarkYellow"
+
+            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
+                --outfile '${multimodalProjectorPath}' ``
+                --outtype '${multimodalProjectorType}'.ToLower() ``
+                '${sourceDirectoryPath}' ``
+                --mmproj"
+        }
+    }
+
     ForEach ($type in $quantizationTypes) {
 
         $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
@@ -63,21 +82,6 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${unquantizedModelPath}' ``
                 '${sourceDirectoryPath}'"
-        }
-
-        $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.F16.gguf"
-
-        # We are computing a multimodal projector model in F16
-        # format for each model to enable vision capabilities.
-        if (!(Test-Path -Path $multimodalProjectorPath)) {
-
-            Write-Host "Creating multimodal projector model from ${unquantizedModelPath} to ${multimodalProjectorPath}..." -ForegroundColor "DarkYellow"
-
-            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
-                --outfile '${multimodalProjectorPath}' ``
-                --outtype 'f16' ``
-                '${sourceDirectoryPath}' ``
-                --mmproj"
         }
 
         # We are computing an importance matrix to enhance the quality of the models.
