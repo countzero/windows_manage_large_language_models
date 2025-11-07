@@ -19,6 +19,7 @@ $cacheDirectory = Resolve-Path -Path $env:CACHE_DIRECTORY
 $trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
 $trainingDataChunks = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNKS)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
+$multimodalProjectorTypes = $env:MULTIMODAL_PROJECTOR_TYPES -split ','
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
@@ -52,10 +53,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
         $unquantizedModelPath = $unquantizedModelPathFromSource
     }
 
-    # We are computing a multimodal projector model in BF16 format
-    # for current hardware and F32 format as a fallback for older
-    # hardware for each model to enable vision capabilities.
-    ForEach ($multimodalProjectorType in @('BF16', 'F32')) {
+    # We are computing a multimodal projector file for each model to enable vision capabilities.
+    ForEach ($multimodalProjectorType in $multimodalProjectorTypes) {
 
         $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.${multimodalProjectorType}.gguf"
 

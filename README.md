@@ -63,6 +63,20 @@ CACHE_DIRECTORY=.\cache
 IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 
 #
+# Comma separated list of multimodal projector types.
+#
+# For models with vision capability a "mmproj" file will be
+# generated and placed next to the quantized models.
+#
+# Common types for the mmproj files:
+#
+#     F32  : Use float32 for older hardware
+#     BF16 : Use bfloat16 for current hardware (recommended)
+#     F16  : Use float16 for older hardware under VRAM constraints
+#
+MULTIMODAL_PROJECTOR_TYPES=BF16
+
+#
 # Comma separated list of quantization types.
 #
 # Possible llama.cpp quantization types:
