@@ -56,7 +56,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
     # We are computing a multimodal projector file for each model to enable vision capabilities.
     ForEach ($multimodalProjectorType in $multimodalProjectorTypes) {
 
-        $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.mmproj.${multimodalProjectorType}.gguf"
+        $multimodalProjectorPath = Join-Path -Path $targetDirectoryPath -ChildPath "mmproj.${repositoryName}.${multimodalProjectorType}.gguf"
 
         if (!(Test-Path -Path $multimodalProjectorPath)) {
 
