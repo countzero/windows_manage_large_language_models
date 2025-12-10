@@ -24,6 +24,11 @@ $multimodalProjectorTypes = $env:MULTIMODAL_PROJECTOR_TYPES -split ','
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
 
+$mistralFormatModels = @(
+    "Devstral-2-123B-Instruct-2512"
+    "Devstral-Small-2-24B-Instruct-2512"
+)
+
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
 
 conda activate llama.cpp
@@ -32,6 +37,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     $sourceDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $repositoryName
     $targetDirectoryPath = Join-Path -Path $targetDirectory -ChildPath $repositoryName
+
+    $mistralFormatOption = if ($repositoryName -In $mistralFormatModels) { "--mistral-format" } else { "" }
 
     if (!(Test-Path -Path $targetDirectoryPath)) {
         New-Item -Path $targetDirectory -Name $repositoryName -ItemType "directory"
@@ -66,7 +73,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 --outfile '${multimodalProjectorPath}' ``
                 --outtype '${multimodalProjectorType}'.ToLower() ``
                 '${sourceDirectoryPath}' ``
-                --mmproj"
+                --mmproj ``
+                '${mistralFormatOption}'"
         }
     }
 
@@ -80,7 +88,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${unquantizedModelPath}' ``
-                '${sourceDirectoryPath}'"
+                '${sourceDirectoryPath}' ``
+                '${mistralFormatOption}'"
         }
 
         # We are computing an importance matrix to enhance the quality of the models.
