@@ -39,11 +39,11 @@ Create the following `.env` file in the project directory. Make sure to change t
 LLAMA_CPP_DIRECTORY=C:\windows_llama.cpp\vendor\llama.cpp
 
 # Path to the training data for computing the importance matrix.
-TRAINING_DATA=C:\windows_llama.cpp\vendor\wikitext-2-raw-v1\wikitext-2-raw\wiki.train.raw
+TRAINING_DATA=C:\windows_llama.cpp\vendor\bartowski1182\calibration_datav5.txt
 
 # This can be used to significantly reduce the time to compute the
-# importance matrix without increasing the final perplexity. We are
-# using 20 chunks (~10k tokens) from the wiki.train.raw dataset.
+# importance matrix without increasing the final perplexity.
+# We are using 20 chunks (~10k tokens) from the training data.
 # @see https://github.com/ggerganov/llama.cpp/discussions/5263
 TRAINING_DATA_CHUNKS=20
 
