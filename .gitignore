@@ -5,3 +5,5 @@
 *.sublime-workspace
 
 .env
+
+.claude/
