@@ -21,7 +21,7 @@ Write-Host "Downloading $($repositoryDirectories.Length) repositories..." -Foreg
 
 ForEach ($repositoryDirectory in $repositoryDirectories) {
 
-    $repositoryDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $repositoryDirectory
+    $repositoryDirectoryPath = $repositoryDirectory.FullName
 
     $repositoryOriginURI = git -C "${repositoryDirectoryPath}" config --get remote.origin.url
 
