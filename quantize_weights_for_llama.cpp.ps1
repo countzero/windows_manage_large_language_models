@@ -38,7 +38,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
     $sourceDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $repositoryName
     $targetDirectoryPath = Join-Path -Path $targetDirectory -ChildPath $repositoryName
 
-    $mistralFormatOption = if ($repositoryName -In $mistralFormatModels) { "--mistral-format" } else { "" }
+    $isMistralFormat = $repositoryName -In $mistralFormatModels
 
     if (!(Test-Path -Path $targetDirectoryPath)) {
         New-Item -Path $targetDirectory -Name $repositoryName -ItemType "directory"
@@ -71,10 +71,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${multimodalProjectorPath}' ``
-                --outtype '${multimodalProjectorType}'.ToLower() ``
+                --outtype '$($multimodalProjectorType.ToLower())' ``
                 '${sourceDirectoryPath}' ``
                 --mmproj ``
-                '${mistralFormatOption}'"
+                $(if ($isMistralFormat) {"--mistral-format"})"
         }
     }
 
@@ -89,7 +89,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${unquantizedModelPath}' ``
                 '${sourceDirectoryPath}' ``
-                '${mistralFormatOption}'"
+                $(if ($isMistralFormat) {"--mistral-format"})"
         }
 
         # We are computing an importance matrix to enhance the quality of the models.
