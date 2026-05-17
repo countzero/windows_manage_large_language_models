@@ -124,6 +124,12 @@ MULTIMODAL_PROJECTOR_TYPES=BF16
 # @see https://github.com/ggerganov/llama.cpp/tree/master/examples/perplexity
 #
 QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
+
+# Quantization type for Multi-Token Prediction (MTP / NextN) layers.
+# These tensors drive speculative-decoding acceptance, so
+# quantizing them as aggressively as the trunk costs more
+# wall-time on rejected drafts than the saved bytes are worth.
+MTP_QUANTIZATION_TYPE=Q8_0
 ```
 
 > [!NOTE]
