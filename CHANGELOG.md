@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.10.0] - 2026-05-26
 
 ### Added
-- Add tools\list_missing_imatrix_tensors.py to generate per-model --tensor-type-file overrides for tensors not covered by the imatrix
+- Add tools/list_missing_imatrix_tensors.py helper that detects model tensors not covered by the imatrix and emits per-tensor --tensor-type overrides
 
 ### Fixed
-- Fix IQ3_XXS / IQ2_* / IQ1_* quantization abort on models with MTP / NextN layers by pinning every missing-imatrix tensor (not just blk.N.nextn.\*) to MTP_QUANTIZATION_TYPE
+- Fix IQ3_XXS / IQ2_* / IQ1_* quantization abort on models with MTP / NextN layers by pinning every imatrix-uncovered tensor (not just blk.N.nextn.*) to MTP_QUANTIZATION_TYPE
 
 ## [1.9.0] - 2026-05-17
 
