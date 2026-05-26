@@ -126,10 +126,44 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
         if (!(Test-Path -Path $quantizedModelPath)) {
 
+            # llama-imatrix does not traverse MTP / NextN blocks during a standard
+            # forward pass, so the transformer tensors inside those blocks get no
+            # imatrix coverage. Very-low-bit quants (IQ3_XXS, IQ2_*, IQ1_*) refuse
+            # to proceed without imatrix data and abort the whole run. We collect
+            # every missing-imatrix tensor name in memory and pin it to
+            # MTP_QUANTIZATION_TYPE via repeated --tensor-type arguments. The
+            # legacy --tensor-type regexes below remain as belt-and-braces.
+            #
+            # Track upstream:
+            #   - https://github.com/ggml-org/llama.cpp/pull/23575
+            #   - https://github.com/ggml-org/llama.cpp/pull/23258
+            #
+            # Once one of these lands and the llama.cpp pin in windows_llama.cpp is
+            # bumped past it, delete tools\list_missing_imatrix_tensors.py, this
+            # block, and the ${missingImatrixOverrides} reference in the quantize
+            # call below.
+            $missingImatrixOverrides = ""
+            if (Test-Path -Path $importanceMatrixPath) {
+
+                Write-Host "Detecting tensors missing from imatrix for ${repositoryName}..." -ForegroundColor "DarkYellow"
+
+                $rules = & python "${PSScriptRoot}\tools\list_missing_imatrix_tensors.py" `
+                    --bf16 $unquantizedModelPath `
+                    --imatrix $importanceMatrixPath `
+                    --quant-type $mtpQuantizationType `
+                    --gguf-py-path "${llamaCppDirectory}\gguf-py"
+
+                if ($rules) {
+                    $rules | ForEach-Object { Write-Host "  override: $_" -ForegroundColor "DarkGray" }
+                    $missingImatrixOverrides = ($rules | ForEach-Object { "--tensor-type '$_'" }) -join " "
+                }
+            }
+
             Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
 
             Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
                 $(if (Test-Path -Path $importanceMatrixPath) {"--imatrix '${importanceMatrixPath}'"}) ``
+                ${missingImatrixOverrides} ``
                 --tensor-type 'blk\.[0-9]+\.nextn\..*=$($mtpQuantizationType.ToLower())' ``
                 --tensor-type 'mtp\..*=$($mtpQuantizationType.ToLower())' ``
                 '${unquantizedModelPath}' ``

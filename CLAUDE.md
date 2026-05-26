@@ -64,7 +64,13 @@ All configuration lives in a single `.env` file (gitignored). Key variables:
 
 ### External Dependencies
 
-- **llama.cpp** compiled via [windows_llama.cpp](https://github.com/countzero/windows_llama.cpp) — provides `convert_hf_to_gguf.py`, `llama-imatrix.exe`, `llama-quantize.exe`
+- **llama.cpp** compiled via [windows_llama.cpp](https://github.com/countzero/windows_llama.cpp) — provides `convert_hf_to_gguf.py`, `llama-imatrix.exe`, `llama-quantize.exe`, and the in-tree `gguf-py` package at `vendor/llama.cpp/gguf-py/`
 - Git with Git LFS
 - Python (via Conda environment `llama.cpp`)
 - CUDA-compatible GPU recommended (CPU fallback for imatrix computation)
+
+## Non-obvious behavior
+
+- **MTP / NextN layers escape imatrix coverage.** `llama-imatrix` runs a standard forward pass which does not exercise multi-token-prediction / NextN draft heads, so every tensor inside an MTP block ends up with zero imatrix entries. Very-low-bit quants (IQ3_XXS, IQ2_*, IQ1_*) require imatrix data per tensor and abort on the first one that lacks it (`llama-quant.cpp` at `src/llama-quant.cpp:1208`). The orchestrator computes the missing-tensor list in memory via `tools\list_missing_imatrix_tensors.py` (stdout = one regex rule per missing tensor) and injects the rules as repeated `--tensor-type` arguments to `llama-quantize`, pinning each to `MTP_QUANTIZATION_TYPE`. Every applied rule is echoed to the run log so the override decisions are visible without a side-channel file. The two legacy `--tensor-type` regexes (`blk\.[0-9]+\.nextn\..*` and `mtp\..*`) only matched the four explicitly-named MTP tensors per block; the helper additionally catches the ~12 transformer tensors per MTP block that share the block index but lack the `.nextn.` marker (e.g. `blk.40.attn_k.weight` on Qwen3.6-35B-A3B). When upstream [llama.cpp PR #23575](https://github.com/ggml-org/llama.cpp/pull/23575) (or the alternative [#23258](https://github.com/ggml-org/llama.cpp/pull/23258)) merges and the pin in `windows_llama.cpp` is bumped past it, delete the helper script, the matching block in `quantize_weights_for_llama.cpp.ps1`, and this note.
+- **imatrix GGUF stores each tensor as a pair of entries.** Each covered tensor `T` is written as two GGUF tensors named `T.in_sum2` and `T.counts` (see `vendor/llama.cpp/tools/imatrix/imatrix.cpp:603-604`). The helper script strips these suffixes when computing the covered-name set. Don't search for raw model tensor names in an imatrix GGUF without first stripping suffixes.
+- **gguf-py is consumed from `vendor/llama.cpp/gguf-py/` via PYTHONPATH-style import**, not from `pip install gguf`. The vendored library tracks the submodule SHA in lockstep with the C++ binaries, so it cannot disagree with the file format produced by the same checkout's `convert_hf_to_gguf.py`. The pip-installed `gguf` package lags upstream and is known to misread files written by newer converters.
