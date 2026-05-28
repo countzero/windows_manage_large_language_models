@@ -126,10 +126,15 @@ MULTIMODAL_PROJECTOR_TYPES=BF16
 QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 
 # Quantization type for Multi-Token Prediction (MTP / NextN) layers.
-# These tensors drive speculative-decoding acceptance, so
-# quantizing them as aggressively as the trunk costs more
-# wall-time on rejected drafts than the saved bytes are worth.
-MTP_QUANTIZATION_TYPE=Q8_0
+# Do not quantize lower than Q4_0 because these tensors drive the
+# speculative-decoding acceptance and rejected drafts will cost time.
+#
+# Common types for the MTP layers:
+#
+#     Q8_0 : if the main quant is also >= Q8_0
+#     Q4_0 : if the main quant is < Q8_0
+#
+MTP_QUANTIZATION_TYPE=Q4_0
 ```
 
 > [!NOTE]

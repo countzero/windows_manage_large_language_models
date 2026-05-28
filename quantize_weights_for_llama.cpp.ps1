@@ -20,11 +20,7 @@ $trainingDataPath = Resolve-Path -Path $env:TRAINING_DATA
 $trainingDataChunks = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNKS)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 $multimodalProjectorTypes = $env:MULTIMODAL_PROJECTOR_TYPES -split ','
-
 $mtpQuantizationType = $env:MTP_QUANTIZATION_TYPE
-if ([string]::IsNullOrWhiteSpace($mtpQuantizationType)) {
-    $mtpQuantizationType = "Q8_0"
-}
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
