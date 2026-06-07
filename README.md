@@ -13,6 +13,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 - Automates the quantization from the source models
 - Handles the intermediate files during quantization to reduce disk usage
 - Improves quantization speed by separating read from write loads
+- Detects standalone draft models (MTP / NextN heads) and converts them to a `mtp-` prefixed draft `GGUF`
 
 ## Installation
 
@@ -135,10 +136,25 @@ QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 #     Q4_0 : if the main quant is < Q8_0
 #
 MTP_QUANTIZATION_TYPE=Q4_0
+
+#
+# Quantization type for standalone draft models (MTP / NextN heads
+# shipped as a separate checkpoint). Detected and converted automatically.
+#
+# Accepted types: Q8_0 | F16 | BF16 | F32
+#
+DRAFT_QUANTIZATION_TYPE=Q8_0
 ```
 
 > [!NOTE]
 > All i-quants (`IQ*`) and the small k-quants (`Q2_K` and `Q2_K_S`) require an [importance matrix](https://github.com/ggerganov/llama.cpp/tree/master/examples/imatrix). Since an importance matrix is also improving the quality of larger quantization types this script will always automatically compute it for each model and use it for the quantization.
+
+> [!NOTE]
+> Some models ship their speculative-decoding draft head (MTP / NextN) as a
+> separate checkpoint. These are detected automatically and converted to a single
+> `DRAFT_QUANTIZATION_TYPE` GGUF (skipping the importance matrix and multimodal
+> projector steps), named with an `mtp-` prefix so llama.cpp loads it as a draft
+> via `--spec-type draft-mtp`.
 
 ## Usage
 

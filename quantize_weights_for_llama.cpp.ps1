@@ -21,6 +21,7 @@ $trainingDataChunks = [System.Convert]::ToInt32($env:TRAINING_DATA_CHUNKS)
 $quantizationTypes = $env:QUANTIZATION_TYPES -split ','
 $multimodalProjectorTypes = $env:MULTIMODAL_PROJECTOR_TYPES -split ','
 $mtpQuantizationType = $env:MTP_QUANTIZATION_TYPE
+$draftQuantizationType = $env:DRAFT_QUANTIZATION_TYPE
 
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 $repositoryDirectories = @(Get-ChildItem -Directory $sourceDirectory -Name | Sort-Object $naturalSort)
@@ -46,6 +47,31 @@ ForEach ($repositoryName in $repositoryDirectories) {
     }
 
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
+
+    # A standalone draft model (MTP / NextN head) is recognised by its config.json:
+    # a draft architecture (*AssistantForCausalLM) or a backbone_hidden_size key.
+    # Convert it straight to one GGUF and skip the mmproj, imatrix and quantize
+    # steps. The "mtp-" prefix marks it as a draft for llama.cpp:
+    #   llama-server -m <main>.gguf -md <this>.gguf --spec-type draft-mtp
+    $modelConfigPath = Join-Path -Path $sourceDirectoryPath -ChildPath "config.json"
+    $modelConfigContent = if (Test-Path -Path $modelConfigPath) { Get-Content -Path $modelConfigPath -Raw } else { "" }
+
+    if ($modelConfigContent -match 'AssistantForCausalLM|backbone_hidden_size') {
+
+        $draftModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "mtp-${repositoryName}.${draftQuantizationType}.gguf"
+
+        if (!(Test-Path -Path $draftModelPath)) {
+
+            Write-Host "Converting draft model ${sourceDirectoryPath} to ${draftModelPath} (${draftQuantizationType})..." -ForegroundColor "DarkYellow"
+
+            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
+                --outfile '${draftModelPath}' ``
+                --outtype '$($draftQuantizationType.ToLower())' ``
+                '${sourceDirectoryPath}'"
+        }
+
+        continue
+    }
 
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.gguf"
 
