@@ -4,24 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.12.0] - 2026-06-08
+## [1.11.0] - 2026-06-08
 
 ### Added
-- Add DRAFT_QUANTIZATION_TYPE environment variable to convert standalone draft models (MTP / NextN heads) into a separate draft GGUF
-
-## [1.11.0] - 2026-05-28
+- Add DRAFT_QUANTIZATION_TYPE to convert standalone draft models (MTP / NextN heads) into a separate draft GGUF
 
 ### Changed
-- Lower recommended MTP_QUANTIZATION_TYPE from Q8_0 to Q4_0 to match the upstream guidance in [llama.cpp PR #23575](https://github.com/ggml-org/llama.cpp/pull/23575). Empirical benchmarks (Qwen3.5-122B-A10B, Qwen3.6-27B) show identical draft acceptance rate vs Q8_0 and higher tg/s on the speculative path, while shrinking each MTP-block tensor by ~47%
-- Remove the hard-coded Q8_0 fallback for MTP_QUANTIZATION_TYPE; the value must now be set explicitly in .env
+- Remove the hard-coded Q8_0 fallback for MTP_QUANTIZATION_TYPE
 
 ## [1.10.0] - 2026-05-26
 
 ### Added
-- Add tools/list_missing_imatrix_tensors.py helper that detects model tensors not covered by the imatrix and emits per-tensor --tensor-type overrides
+- Add tools/list_missing_imatrix_tensors.py helper that detects model tensors not covered by the imatrix
 
 ### Fixed
-- Fix IQ3_XXS / IQ2_* / IQ1_* quantization abort on models with MTP / NextN layers by pinning every imatrix-uncovered tensor (not just blk.N.nextn.*) to MTP_QUANTIZATION_TYPE
+- Fix IQ3_XXS / IQ2_* / IQ1_* quantization abort on models with MTP / NextN layers by pinning every imatrix-uncovered tensor to MTP_QUANTIZATION_TYPE
 
 ## [1.9.0] - 2026-05-17
 
