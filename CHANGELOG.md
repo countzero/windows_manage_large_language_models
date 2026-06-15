@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-06-15
+
 ### Added
 - Detect and convert EAGLE3 speculative-decoding drafts into a separate `eagle3-` prefixed draft GGUF, resolving the target model from the speculators config
 
