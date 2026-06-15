@@ -14,6 +14,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 - Handles the intermediate files during quantization to reduce disk usage
 - Improves quantization speed by separating read from write loads
 - Detects standalone draft models (MTP / NextN heads) and converts them to a `mtp-` prefixed draft `GGUF`
+- Detects EAGLE3 speculative-decoding drafts and converts them to an `eagle3-` prefixed draft `GGUF`
 
 ## Installation
 
@@ -155,6 +156,15 @@ DRAFT_QUANTIZATION_TYPE=Q8_0
 > `DRAFT_QUANTIZATION_TYPE` GGUF (skipping the importance matrix and multimodal
 > projector steps), named with an `mtp-` prefix so llama.cpp loads it as a draft
 > via `--spec-type draft-mtp`.
+
+> [!NOTE]
+> EAGLE3 drafts (a `config.json` with a `draft_vocab_size` key) are likewise
+> detected and converted to a single `DRAFT_QUANTIZATION_TYPE` GGUF, named with an
+> `eagle3-` prefix and loaded via `--spec-type draft-eagle3`. The converter needs
+> the target model's HuggingFace directory, so the target must also be present in
+> `SOURCE_DIRECTORY`. Auto-pairing currently works for the RedHat "speculators"
+> format (which records `speculators_config.verifier.name_or_path`); other EAGLE3
+> families are skipped with a warning until their target is mapped.
 
 ## Usage
 

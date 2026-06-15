@@ -73,6 +73,48 @@ ForEach ($repositoryName in $repositoryDirectories) {
         continue
     }
 
+    # EAGLE3 draft (config.json has draft_vocab_size): a separate draft GGUF that,
+    # unlike MTP/NextN, needs the target model's HF dir (--target-model-dir) for the
+    # target tokenizer + vocab/layer counts. Target read from the speculators config.
+    if ($modelConfigContent -match '"draft_vocab_size"') {
+
+        # -AsHashtable: speculators configs carry an empty-string key in auto_map
+        # ("": "...") that ConvertFrom-Json rejects without it.
+        $modelConfig = $modelConfigContent | ConvertFrom-Json -AsHashtable
+
+        $eagle3ModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "eagle3-${repositoryName}.${draftQuantizationType}.gguf"
+
+        $targetReference = $modelConfig.speculators_config.verifier.name_or_path
+        $targetReferenceName = if ($targetReference) { Split-Path -Path $targetReference -Leaf } else { $null }
+        $targetRepositoryName = if ($targetReferenceName) {
+            $repositoryDirectories | Where-Object { $_ -ieq $targetReferenceName } | Select-Object -First 1
+        } else { $null }
+
+        if (!$targetRepositoryName) {
+            if ($targetReference) {
+                Write-Host "Skipping EAGLE3 draft '${repositoryName}': it was trained for the target model '${targetReference}', but no matching directory '${targetReferenceName}' exists in ${sourceDirectory}. An EAGLE3 draft is not standalone - it reuses its target's tokenizer and taps the target's hidden states, so that exact target model must be present to convert. Clone it into '${sourceDirectory}\${targetReferenceName}' and re-run." -ForegroundColor "Red"
+            } else {
+                Write-Host "Skipping EAGLE3 draft '${repositoryName}': its config.json records no target model (no speculators_config.verifier.name_or_path), so the model it was trained on cannot be resolved automatically. EAGLE3 drafts need their specific target model's HuggingFace directory present to convert; provide it in ${sourceDirectory}." -ForegroundColor "Red"
+            }
+            continue
+        }
+
+        if (!(Test-Path -Path $eagle3ModelPath)) {
+
+            $targetModelDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $targetRepositoryName
+
+            Write-Host "Converting EAGLE3 draft ${sourceDirectoryPath} to ${eagle3ModelPath} (${draftQuantizationType}, target ${targetRepositoryName})..." -ForegroundColor "DarkYellow"
+
+            Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
+                --outfile '${eagle3ModelPath}' ``
+                --outtype '$($draftQuantizationType.ToLower())' ``
+                --target-model-dir '${targetModelDirectoryPath}' ``
+                '${sourceDirectoryPath}'"
+        }
+
+        continue
+    }
+
     $unquantizedModelPath = Join-Path -Path $cacheDirectory -ChildPath "${repositoryName}.gguf"
 
     # Note that we are not removing *.importance-matrix.gguf files because
