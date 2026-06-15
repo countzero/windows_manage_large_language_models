@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detect and convert EAGLE3 speculative-decoding drafts into a separate `eagle3-` prefixed draft GGUF, resolving the target model from the speculators config
 
 ### Changed
+- Move repo guidance to AGENTS.md with a CLAUDE.md import shim
 - Convert standalone draft models (separate-checkpoint MTP / NextN heads and EAGLE3) in two steps (convert then quantize) so any llama-quantize type is supported for draft weights
 - Consolidate MTP_QUANTIZATION_TYPE into DRAFT_QUANTIZATION_TYPE; for in-GGUF MTP / NextN tensor pins a K-quant preset is reduced to its base ggml tensor type (e.g. Q4_K_M to q4_K)
 

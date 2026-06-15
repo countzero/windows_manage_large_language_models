@@ -7,3 +7,7 @@
 .env
 
 .claude/
+
+# Local scratch directory for all agent-generated artifacts (diffs, trace
+# outputs, generated reports, experimental scripts). See AGENTS.md "Scratch Files".
+.tmp/
