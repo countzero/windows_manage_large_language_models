@@ -127,24 +127,30 @@ MULTIMODAL_PROJECTOR_TYPES=BF16
 #
 QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 
-# Quantization type for Multi-Token Prediction (MTP / NextN) layers.
-# Do not quantize lower than Q4_0 because these tensors drive the
-# speculative-decoding acceptance and rejected drafts will cost time.
 #
-# Common types for the MTP layers:
+# Quantization type for speculative-decoding draft weights. This single value
+# governs both:
 #
-#     Q8_0 : if the main quant is also >= Q8_0
-#     Q4_0 : if the main quant is < Q8_0
+#   - standalone draft files (separate-checkpoint MTP / NextN heads and EAGLE3),
+#     converted in two steps (convert -> llama-quantize) so any llama-quantize
+#     preset is accepted; and
+#   - in-GGUF MTP / NextN tensor pins inside a main model, where a K-quant preset
+#     is reduced to its base ggml tensor type (e.g. Q4_K_M -> q4_K).
 #
-MTP_QUANTIZATION_TYPE=Q4_0
-
+# Draft quality never affects output correctness (the target model verifies every
+# drafted token); it only trades draft speed against acceptance rate.
 #
-# Quantization type for standalone draft models (MTP / NextN heads
-# shipped as a separate checkpoint). Detected and converted automatically.
+# Common types for draft weights:
 #
-# Accepted types: Q8_0 | F16 | BF16 | F32
+#     Q4_0   : fastest on the speculative hot path (recommended)
+#     Q4_K_M : slightly better quality per byte
+#     Q5_K_M : higher quality
+#     Q8_0   : maximum draft fidelity
 #
-DRAFT_QUANTIZATION_TYPE=Q8_0
+# Do not use i-quants (IQ*) or Q2_K for drafts: no importance matrix is computed
+# for draft weights, so llama-quantize will error.
+#
+DRAFT_QUANTIZATION_TYPE=Q4_0
 ```
 
 > [!NOTE]
