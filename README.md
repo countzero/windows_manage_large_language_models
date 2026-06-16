@@ -14,6 +14,7 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 - Handles the intermediate files during quantization to reduce disk usage
 - Improves quantization speed by separating read from write loads
 - Detects standalone draft models (MTP / NextN heads) and converts them to a `mtp-` prefixed draft `GGUF`
+- Detects EAGLE3 speculative-decoding drafts and converts them to an `eagle3-` prefixed draft `GGUF`
 
 ## Installation
 
@@ -126,24 +127,23 @@ MULTIMODAL_PROJECTOR_TYPES=BF16
 #
 QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 
-# Quantization type for Multi-Token Prediction (MTP / NextN) layers.
-# Do not quantize lower than Q4_0 because these tensors drive the
-# speculative-decoding acceptance and rejected drafts will cost time.
 #
-# Common types for the MTP layers:
+# Quantization type for speculative-decoding draft weights.
 #
-#     Q8_0 : if the main quant is also >= Q8_0
-#     Q4_0 : if the main quant is < Q8_0
+# The following cases are supported:
 #
-MTP_QUANTIZATION_TYPE=Q4_0
-
+#   - Standalone draft files (separate-checkpoint MTP / NextN heads and EAGLE3).
 #
-# Quantization type for standalone draft models (MTP / NextN heads
-# shipped as a separate checkpoint). Detected and converted automatically.
+#   - Embedded Multi-Token Prediction (MTP / NextN) layers inside a model.
 #
-# Accepted types: Q8_0 | F16 | BF16 | F32
+# Common types for draft weights:
 #
-DRAFT_QUANTIZATION_TYPE=Q8_0
+#     Q4_0   : fastest on the speculative hot path (recommended)
+#     Q4_K_M : slightly better quality per byte
+#     Q5_K_M : higher quality
+#     Q8_0   : maximum draft fidelity
+#
+DRAFT_QUANTIZATION_TYPE=Q4_0
 ```
 
 > [!NOTE]
@@ -155,6 +155,15 @@ DRAFT_QUANTIZATION_TYPE=Q8_0
 > `DRAFT_QUANTIZATION_TYPE` GGUF (skipping the importance matrix and multimodal
 > projector steps), named with an `mtp-` prefix so llama.cpp loads it as a draft
 > via `--spec-type draft-mtp`.
+
+> [!NOTE]
+> EAGLE3 drafts (a `config.json` with a `draft_vocab_size` key) are likewise
+> detected and converted to a single `DRAFT_QUANTIZATION_TYPE` GGUF, named with an
+> `eagle3-` prefix and loaded via `--spec-type draft-eagle3`. The converter needs
+> the target model's HuggingFace directory, so the target must also be present in
+> `SOURCE_DIRECTORY`. Auto-pairing currently works for the RedHat "speculators"
+> format (which records `speculators_config.verifier.name_or_path`); other EAGLE3
+> families are skipped with a warning until their target is mapped.
 
 ## Usage
 

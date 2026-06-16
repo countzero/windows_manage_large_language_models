@@ -21,7 +21,7 @@ Track upstream:
 When either lands and the llama.cpp pin in the sibling
 windows_llama.cpp project is bumped past it, delete this script, the
 two integration points in `quantize_weights_for_llama.cpp.ps1`, and
-the matching note in CLAUDE.md.
+the matching note in AGENTS.md.
 
 Usage:
     python list_missing_imatrix_tensors.py \\
