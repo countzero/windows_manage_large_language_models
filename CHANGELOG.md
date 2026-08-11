@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Detect and convert DFlash / DSpark block-diffusion drafts into a separate `dflash-` / `dspark-` prefixed draft GGUF
+- Resolve a draft model's target by stripping the draft suffix from its directory name when the config records no target
+
+### Fixed
+- Fix DFlash drafters (e.g. `MuseGlimmerAssistantModel`) being processed as regular models, which failed conversion because `--target-model-dir` was missing and then cascaded into failed importance matrix and quantization runs
+- Skip the remaining pipeline of a model with a single explanatory message when its conversion produces no GGUF
+- Stop computing an importance matrix for models whose quantized outputs already exist
+
+### Changed
+- Compute the missing-imatrix tensor rules once per model instead of once per quantization type
+
 ## [1.12.0] - 2026-06-15
 
 ### Added

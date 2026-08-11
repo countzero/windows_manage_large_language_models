@@ -55,12 +55,54 @@ function Convert-StandaloneDraft {
         '${SourceDirectoryPath}' ``
         $(if ($TargetModelDir) {"--target-model-dir '${TargetModelDir}'"})"
 
+    if (!(Test-Path -Path $intermediatePath)) {
+
+        Write-Host "Skipping draft '$(Split-Path -Path $SourceDirectoryPath -Leaf)': the conversion produced no GGUF at ${intermediatePath}. See the converter output above." -ForegroundColor "Red"
+        return
+    }
+
     Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
         '${intermediatePath}' ``
         '${OutputPath}' ``
         '${QuantizationType}'"
 
     Remove-Item -Path $intermediatePath -Force
+}
+
+# Resolve the target model a draft was trained for to a directory in
+# SOURCE_DIRECTORY. EAGLE3 / DFlash / DSpark drafts are not standalone: they reuse
+# the target's tokenizer and tap its hidden states, so convert_hf_to_gguf.py needs
+# that exact target via --target-model-dir.
+#
+# The speculators format records the target explicitly; every other vendor records
+# nothing at all, leaving the directory name as the only signal. Order matters:
+# 'gemma-4-31B-it-speculator.eagle3' strips to 'gemma-4-31B-it-speculator', which
+# matches nothing, and resolves only through its verifier field.
+function Resolve-DraftTargetRepository {
+    param(
+        [Parameter(Mandatory)] [string] $RepositoryName,
+        [Parameter(Mandatory)] [AllowNull()] [hashtable] $ModelConfig
+    )
+
+    $candidates = @()
+
+    $recordedTarget = $ModelConfig.speculators_config.verifier.name_or_path
+    if ($recordedTarget) {
+        $candidates += Split-Path -Path $recordedTarget -Leaf
+    }
+
+    $candidates += $RepositoryName -ireplace '[-_.](assistant|dflash|dspark|eagle3)([-_.]b?\d+)?$', ''
+
+    ForEach ($candidate in $candidates) {
+
+        $match = $repositoryDirectories | Where-Object { $_ -ieq $candidate } | Select-Object -First 1
+
+        if ($match -and $match -ine $RepositoryName) {
+            return $match
+        }
+    }
+
+    return $null
 }
 
 Write-Host "Quantizing $($repositoryDirectories.Length) large language models." -ForegroundColor "Yellow"
@@ -102,39 +144,45 @@ ForEach ($repositoryName in $repositoryDirectories) {
         continue
     }
 
-    # EAGLE3 draft (config.json has draft_vocab_size): a separate draft GGUF that,
-    # unlike MTP/NextN, needs the target model's HF dir (--target-model-dir) for the
-    # target tokenizer + vocab/layer counts. Target read from the speculators config.
-    if ($modelConfigContent -match '"draft_vocab_size"') {
+    # Standalone drafts that, unlike MTP/NextN, need the target model's HF directory
+    # (--target-model-dir) for the target's tokenizer and layer/vocab counts. The kind
+    # doubles as the file name prefix llama.cpp uses to discover a draft sidecar, and
+    # names the --spec-type to run it with (draft-dflash / draft-dspark / draft-eagle3).
+    # DFlash is tested before EAGLE3 because a speculators-format DFlash carries both
+    # keys and belongs to the DFlash converter.
+    $draftKind = switch -Regex ($modelConfigContent) {
+        'target_layer_ids'   { if ($modelConfigContent -match 'dspark') { "dspark" } else { "dflash" }; break }
+        '"draft_vocab_size"' { "eagle3"; break }
+        default              { $null }
+    }
+
+    if ($draftKind) {
 
         # -AsHashtable: speculators configs carry an empty-string key in auto_map
         # ("": "...") that ConvertFrom-Json rejects without it.
         $modelConfig = $modelConfigContent | ConvertFrom-Json -AsHashtable
 
-        $eagle3ModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "eagle3-${repositoryName}.${draftQuantizationType}.gguf"
+        $draftModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${draftKind}-${repositoryName}.${draftQuantizationType}.gguf"
 
-        $targetReference = $modelConfig.speculators_config.verifier.name_or_path
-        $targetReferenceName = if ($targetReference) { Split-Path -Path $targetReference -Leaf } else { $null }
-        $targetRepositoryName = if ($targetReferenceName) {
-            $repositoryDirectories | Where-Object { $_ -ieq $targetReferenceName } | Select-Object -First 1
-        } else { $null }
+        $targetRepositoryName = Resolve-DraftTargetRepository -RepositoryName $repositoryName -ModelConfig $modelConfig
 
         if (!$targetRepositoryName) {
-            if ($targetReference) {
-                Write-Host "Skipping EAGLE3 draft '${repositoryName}': it was trained for the target model '${targetReference}', but no matching directory '${targetReferenceName}' exists in ${sourceDirectory}. An EAGLE3 draft is not standalone - it reuses its target's tokenizer and taps the target's hidden states, so that exact target model must be present to convert. Clone it into '${sourceDirectory}\${targetReferenceName}' and re-run." -ForegroundColor "Red"
+            $recordedTarget = $modelConfig.speculators_config.verifier.name_or_path
+            if ($recordedTarget) {
+                Write-Host "Skipping $($draftKind.ToUpper()) draft '${repositoryName}': it was trained for the target model '${recordedTarget}', but no matching directory '$(Split-Path -Path $recordedTarget -Leaf)' exists in ${sourceDirectory}. Such a draft is not standalone - it reuses its target's tokenizer and taps the target's hidden states, so that exact target model must be present to convert. Clone it into '${sourceDirectory}\$(Split-Path -Path $recordedTarget -Leaf)' and re-run." -ForegroundColor "Red"
             } else {
-                Write-Host "Skipping EAGLE3 draft '${repositoryName}': its config.json records no target model (no speculators_config.verifier.name_or_path), so the model it was trained on cannot be resolved automatically. EAGLE3 drafts need their specific target model's HuggingFace directory present to convert; provide it in ${sourceDirectory}." -ForegroundColor "Red"
+                Write-Host "Skipping $($draftKind.ToUpper()) draft '${repositoryName}': its config.json records no target model, and stripping the draft suffix from the directory name matched no sibling in ${sourceDirectory}. Such a draft needs its specific target model's HuggingFace directory present to convert; provide it in ${sourceDirectory} and name the directory after the target repository." -ForegroundColor "Red"
             }
             continue
         }
 
-        if (!(Test-Path -Path $eagle3ModelPath)) {
+        if (!(Test-Path -Path $draftModelPath)) {
 
             $targetModelDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $targetRepositoryName
 
-            Write-Host "Converting EAGLE3 draft ${sourceDirectoryPath} to ${eagle3ModelPath} (${draftQuantizationType}, target ${targetRepositoryName})..." -ForegroundColor "DarkYellow"
+            Write-Host "Converting $($draftKind.ToUpper()) draft ${sourceDirectoryPath} to ${draftModelPath} (${draftQuantizationType}, target ${targetRepositoryName})..." -ForegroundColor "DarkYellow"
 
-            Convert-StandaloneDraft -SourceDirectoryPath $sourceDirectoryPath -OutputPath $eagle3ModelPath -QuantizationType $draftQuantizationType -TargetModelDir $targetModelDirectoryPath
+            Convert-StandaloneDraft -SourceDirectoryPath $sourceDirectoryPath -OutputPath $draftModelPath -QuantizationType $draftQuantizationType -TargetModelDir $targetModelDirectoryPath
         }
 
         continue
@@ -161,7 +209,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
         if (!(Test-Path -Path $multimodalProjectorPath)) {
 
-            Write-Host "Creating multimodal projector model from ${unquantizedModelPath} to ${multimodalProjectorPath}..." -ForegroundColor "DarkYellow"
+            Write-Host "Creating multimodal projector model from ${sourceDirectoryPath} to ${multimodalProjectorPath}..." -ForegroundColor "DarkYellow"
 
             Invoke-Expression "python ${llamaCppDirectory}\convert_hf_to_gguf.py ``
                 --outfile '${multimodalProjectorPath}' ``
@@ -172,11 +220,16 @@ ForEach ($repositoryName in $repositoryDirectories) {
         }
     }
 
-    ForEach ($type in $quantizationTypes) {
+    # Every step below consumes the unquantized GGUF, so nothing may run once a
+    # conversion has produced no file: llama-imatrix and llama-quantize would each
+    # fail on the missing input and bury the actual error in unrelated output.
+    $pendingTypes = @($quantizationTypes | Where-Object {
+        !(Test-Path -Path (Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.$_.gguf"))
+    })
 
-        $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
+    if ($pendingTypes.Count -gt 0) {
 
-        if (!(Test-Path -Path $quantizedModelPath) -and !(Test-Path -Path $unquantizedModelPath)) {
+        if (!(Test-Path -Path $unquantizedModelPath)) {
 
             Write-Host "Converting ${sourceDirectoryPath} to ${unquantizedModelPath}..." -ForegroundColor "DarkYellow"
 
@@ -186,34 +239,38 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 $(if ($isMistralFormat) {"--mistral-format"})"
         }
 
-        # We are computing an importance matrix to enhance the quality of the models.
-        # https://github.com/ggml-org/llama.cpp/tree/master/tools/imatrix
-        if (!(Test-Path -Path $importanceMatrixPath)) {
+        if (!(Test-Path -Path $unquantizedModelPath)) {
 
-            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on GPU..." -ForegroundColor "DarkYellow"
+            Write-Host "Skipping '${repositoryName}': the conversion produced no GGUF at ${unquantizedModelPath}, so there is nothing to compute an importance matrix from or to quantize. See the converter output above." -ForegroundColor "Red"
 
-            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
-                --model '${unquantizedModelPath}' ``
-                --file '${trainingDataPath}' ``
-                --chunks ${trainingDataChunks} ``
-                --output '${importanceMatrixPath}' ``
-                --gpu-layers 999"
-        }
+        } else {
 
-        # We are falling back to CPU only importance matrix generation.
-        if (!(Test-Path -Path $importanceMatrixPath)) {
+            # We are computing an importance matrix to enhance the quality of the models.
+            # https://github.com/ggml-org/llama.cpp/tree/master/tools/imatrix
+            if (!(Test-Path -Path $importanceMatrixPath)) {
 
-            Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on CPU..." -ForegroundColor "DarkYellow"
+                Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on GPU..." -ForegroundColor "DarkYellow"
 
-            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
-                --model '${unquantizedModelPath}' ``
-                --file '${trainingDataPath}' ``
-                --chunks ${trainingDataChunks} ``
-                --output '${importanceMatrixPath}' ``
-                --gpu-layers 0"
-        }
+                Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
+                    --model '${unquantizedModelPath}' ``
+                    --file '${trainingDataPath}' ``
+                    --chunks ${trainingDataChunks} ``
+                    --output '${importanceMatrixPath}' ``
+                    --gpu-layers 999"
+            }
 
-        if (!(Test-Path -Path $quantizedModelPath)) {
+            # We are falling back to CPU only importance matrix generation.
+            if (!(Test-Path -Path $importanceMatrixPath)) {
+
+                Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on CPU..." -ForegroundColor "DarkYellow"
+
+                Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
+                    --model '${unquantizedModelPath}' ``
+                    --file '${trainingDataPath}' ``
+                    --chunks ${trainingDataChunks} ``
+                    --output '${importanceMatrixPath}' ``
+                    --gpu-layers 0"
+            }
 
             # llama-imatrix does not traverse MTP / NextN blocks during a standard
             # forward pass, so the transformer tensors inside those blocks get no
@@ -222,7 +279,8 @@ ForEach ($repositoryName in $repositoryDirectories) {
             # every missing-imatrix tensor name in memory and pin it to
             # DRAFT_QUANTIZATION_TYPE (as the ggml tensor type $draftTensorType) via
             # repeated --tensor-type arguments. The legacy --tensor-type regexes
-            # below remain as belt-and-braces.
+            # below remain as belt-and-braces. The rule list does not depend on the
+            # quantization type, so it is computed once for all of them.
             #
             # Track upstream:
             #   - https://github.com/ggml-org/llama.cpp/pull/23575
@@ -249,16 +307,21 @@ ForEach ($repositoryName in $repositoryDirectories) {
                 }
             }
 
-            Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
+            ForEach ($type in $pendingTypes) {
 
-            Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
-                $(if (Test-Path -Path $importanceMatrixPath) {"--imatrix '${importanceMatrixPath}'"}) ``
-                ${missingImatrixOverrides} ``
-                --tensor-type 'blk\.[0-9]+\.nextn\..*=$($draftTensorType.ToLower())' ``
-                --tensor-type 'mtp\..*=$($draftTensorType.ToLower())' ``
-                '${unquantizedModelPath}' ``
-                '${quantizedModelPath}' ``
-                '${type}'"
+                $quantizedModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${repositoryName}.${type}.gguf"
+
+                Write-Host "Quantizing ${unquantizedModelPath} to ${quantizedModelPath}..." -ForegroundColor "DarkYellow"
+
+                Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-quantize.exe ``
+                    $(if (Test-Path -Path $importanceMatrixPath) {"--imatrix '${importanceMatrixPath}'"}) ``
+                    ${missingImatrixOverrides} ``
+                    --tensor-type 'blk\.[0-9]+\.nextn\..*=$($draftTensorType.ToLower())' ``
+                    --tensor-type 'mtp\..*=$($draftTensorType.ToLower())' ``
+                    '${unquantizedModelPath}' ``
+                    '${quantizedModelPath}' ``
+                    '${type}'"
+            }
         }
     }
 
