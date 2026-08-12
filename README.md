@@ -77,6 +77,7 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #     F32  : Use float32 for older hardware
 #     BF16 : Use bfloat16 for current hardware (recommended)
 #     F16  : Use float16 for older hardware under VRAM constraints
+#     Q8_0 : Use 8-bit weights for half the size (not safe on every model)
 #
 MULTIMODAL_PROJECTOR_TYPES=BF16
 
