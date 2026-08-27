@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-08-27
+
 ### Added
 - Detect and convert DFlash / DSpark block-diffusion drafts into a separate `dflash-` / `dspark-` prefixed draft GGUF
 - Resolve a draft model's target by stripping the draft suffix from its directory name when the config records no target
