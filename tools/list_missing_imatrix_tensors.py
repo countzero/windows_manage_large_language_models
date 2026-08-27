@@ -78,6 +78,14 @@ def main() -> int:
         GGMLQuantizationType.I64,
     }
 
+    # llama-quantize exempts these from the requires-imatrix abort at any target
+    # type (src/llama-quant.cpp:803-806). AGENTS.md -> Non-obvious behavior.
+    skip_names = {
+        "token_embd.weight",
+        "per_layer_token_embd.weight",
+        "output.weight",
+    }
+
     quant = args.quant_type.lower()
 
     # An imatrix GGUF stores each tensor as a pair of entries named
@@ -101,6 +109,8 @@ def main() -> int:
     missing = 0
     for tensor in bf16_reader.tensors:
         if tensor.tensor_type in skip_types:
+            continue
+        if tensor.name in skip_names:
             continue
         if tensor.name in imatrix_names:
             continue

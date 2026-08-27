@@ -15,6 +15,8 @@ Think batch quantization like https://huggingface.co/TheBloke does it, but on yo
 - Improves quantization speed by separating read from write loads
 - Detects standalone draft models (MTP / NextN heads) and converts them to a `mtp-` prefixed draft `GGUF`
 - Detects EAGLE3 speculative-decoding drafts and converts them to an `eagle3-` prefixed draft `GGUF`
+- Detects DFlash / DSpark block-diffusion drafts and converts them to a `dflash-` / `dspark-` prefixed draft `GGUF`
+- Skips a model with a single explanatory message when its conversion fails, instead of cascading into failed importance matrix and quantization runs
 
 ## Installation
 
@@ -75,6 +77,7 @@ IMPORTANCE_MATRIX_DIRECTORY=.\imatrix
 #     F32  : Use float32 for older hardware
 #     BF16 : Use bfloat16 for current hardware (recommended)
 #     F16  : Use float16 for older hardware under VRAM constraints
+#     Q8_0 : Use 8-bit weights for half the size (not safe on every model)
 #
 MULTIMODAL_PROJECTOR_TYPES=BF16
 
@@ -132,7 +135,8 @@ QUANTIZATION_TYPES=Q5_K_M,IQ4_XS
 #
 # The following cases are supported:
 #
-#   - Standalone draft files (separate-checkpoint MTP / NextN heads and EAGLE3).
+#   - Standalone draft files (separate-checkpoint MTP / NextN heads,
+#     EAGLE3, and DFlash / DSpark block-diffusion drafters).
 #
 #   - Embedded Multi-Token Prediction (MTP / NextN) layers inside a model.
 #
@@ -157,13 +161,25 @@ DRAFT_QUANTIZATION_TYPE=Q4_0
 > via `--spec-type draft-mtp`.
 
 > [!NOTE]
-> EAGLE3 drafts (a `config.json` with a `draft_vocab_size` key) are likewise
-> detected and converted to a single `DRAFT_QUANTIZATION_TYPE` GGUF, named with an
-> `eagle3-` prefix and loaded via `--spec-type draft-eagle3`. The converter needs
-> the target model's HuggingFace directory, so the target must also be present in
-> `SOURCE_DIRECTORY`. Auto-pairing currently works for the RedHat "speculators"
-> format (which records `speculators_config.verifier.name_or_path`); other EAGLE3
-> families are skipped with a warning until their target is mapped.
+> EAGLE3 drafts (a `config.json` with a `draft_vocab_size` key) and DFlash / DSpark
+> block-diffusion drafts (a `target_layer_ids` key) are likewise detected and
+> converted to a single `DRAFT_QUANTIZATION_TYPE` GGUF, named with an `eagle3-`,
+> `dflash-` or `dspark-` prefix and loaded via the matching `--spec-type`
+> (`draft-eagle3`, `draft-dflash`, `draft-dspark`).
+>
+> These drafts are not standalone: they reuse their target's tokenizer and tap its
+> hidden states, so the converter needs the target model's HuggingFace directory and
+> the target must also be present in `SOURCE_DIRECTORY`. It is resolved from
+> `speculators_config.verifier.name_or_path` when the draft records it (RedHat
+> "speculators" format), otherwise by stripping the draft suffix from the directory
+> name and looking for a sibling — `Muse-Glimmer-30B-assistant` pairs with
+> `Muse-Glimmer-30B`. A draft whose target resolves to neither is skipped with an
+> explanatory message.
+>
+> A DFlash draft emits a whole block of tokens per draft step, so pass
+> `--spec-draft-n-max` up to the drafter's trained `block_size` (16 for the Muse
+> Glimmer drafter); llama.cpp clamps larger values. Do not quantize the target's KV
+> cache at runtime.
 
 ## Usage
 
