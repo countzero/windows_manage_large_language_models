@@ -13,6 +13,8 @@ Get-Content "./.env" | ForEach {
 
 $sourceDirectory = Resolve-Path -Path $env:SOURCE_DIRECTORY
 
+$lfsStorageDirectory = $env:SOURCE_DIRECTORY_LFS_STORAGE
+
 $naturalSort = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
 $repositoryDirectories = Get-ChildItem -Directory $sourceDirectory | Sort-Object $naturalSort
@@ -27,9 +29,18 @@ ForEach ($repositoryDirectory in $repositoryDirectories) {
 
     Write-Host "Downloading ${repositoryOriginURI}..." -ForegroundColor "DarkYellow"
 
+    $storageDirectory = "${repositoryDirectoryPath}\.git\lfs"
+
+    # Git LFS uses an absolute lfs.storage verbatim, so mirroring the
+    # repository name into it is this script's job rather than Git LFS's.
+    if ($lfsStorageDirectory) {
+        $storageDirectory = Join-Path $lfsStorageDirectory $repositoryDirectory.Name
+        git -C "${repositoryDirectoryPath}" config lfs.storage $storageDirectory
+    }
+
     Write-Host "Pruning incomplete large files..." -ForegroundColor "Yellow"
-    if (Test-Path -Path "${repositoryDirectoryPath}\.git\lfs\incomplete") {
-        Remove-Item "${repositoryDirectoryPath}\.git\lfs\incomplete\*" -Recurse -Force
+    if (Test-Path -Path "${storageDirectory}\incomplete") {
+        Remove-Item "${storageDirectory}\incomplete\*" -Recurse -Force
     }
 
     Write-Host "Resetting working directory..." -ForegroundColor "Yellow"

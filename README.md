@@ -54,6 +54,24 @@ TRAINING_DATA_CHUNKS=20
 # Path to the Git repositories containing the models.
 SOURCE_DIRECTORY=.\source
 
+#
+# Absolute directory for the Git LFS object store, mirrored per repository.
+#
+# Empty keeps the Git LFS default inside each repository:
+#
+#     (empty)        :  .\source\<model>\.git\lfs
+#     E:\AI\LLM\lfs  :  E:\AI\LLM\lfs\<model>
+#
+# Hint: Ideally this should be located on a different physical drive, so
+# that one drive no longer serves both the read and the write of every
+# checked out byte. This relocates the second copy of every large file,
+# it never deduplicates.
+#
+# Move the existing objects BEFORE setting this, otherwise the next
+# download re-fetches every large file.
+#
+SOURCE_DIRECTORY_LFS_STORAGE=
+
 # Path to the quantized models in GGUF format.
 TARGET_DIRECTORY=.\gguf
 

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add SOURCE_DIRECTORY_LFS_STORAGE to relocate the Git LFS object store of every model repository onto another drive, mirrored per repository, so that a single drive no longer serves both the read and the write of every checked out large file
+
 ## [1.13.0] - 2026-08-27
 
 ### Added
