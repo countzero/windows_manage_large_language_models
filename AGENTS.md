@@ -53,6 +53,7 @@ All configuration lives in a single `.env` file (gitignored). Key variables:
 - `MULTIMODAL_PROJECTOR_TYPES` — Comma-separated projector types (e.g., `BF16`)
 - `DRAFT_QUANTIZATION_TYPE` — Precision for all speculative-decoding draft weights: standalone draft files (separate-checkpoint MTP/NextN heads, EAGLE3, and DFlash/DSpark, converted two-step so any `llama-quantize` preset works) and in-GGUF MTP/NextN tensor pins (a K-quant preset is reduced to its base ggml type, e.g. `Q4_K_M`→`q4_K`). Recommended `Q4_0`; i-quants/`Q2_K` unsupported for drafts (no imatrix is computed)
 - `SOURCE_DIRECTORY`, `TARGET_DIRECTORY`, `CACHE_DIRECTORY`, `IMPORTANCE_MATRIX_DIRECTORY` — Working directories
+- `SOURCE_DIRECTORY_LFS_STORAGE` — Absolute directory for the Git LFS object store, persisted per repository as `lfs.storage`. Empty keeps the default `{repo}/.git/lfs`. Git LFS uses an absolute value verbatim, so the per-repository mirroring (`{value}/{model}`) is done by `download_model_sources.ps1`, not by Git LFS. This relocates the object store, it never deduplicates: the working tree and the object store remain two full copies of every large file. Existing objects must be moved before the value is set, otherwise the next download re-fetches them all
 
 ### Key Implementation Details
 
