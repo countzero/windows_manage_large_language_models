@@ -179,8 +179,8 @@ DRAFT_QUANTIZATION_TYPE=Q4_0
 > via `--spec-type draft-mtp`.
 
 > [!NOTE]
-> EAGLE3 drafts (a `config.json` with a `draft_vocab_size` key) and DFlash / DSpark
-> block-diffusion drafts (a `target_layer_ids` key) are likewise detected and
+> EAGLE3 drafts and DFlash / DSpark block-diffusion drafts, recognised by the
+> top-level `architectures` entry of their `config.json`, are likewise detected and
 > converted to a single `DRAFT_QUANTIZATION_TYPE` GGUF, named with an `eagle3-`,
 > `dflash-` or `dspark-` prefix and loaded via the matching `--spec-type`
 > (`draft-eagle3`, `draft-dflash`, `draft-dspark`).

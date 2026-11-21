@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix full models that nest draft settings in their `config.json` (e.g. Inkling-2-Mini `mtp_config`, DeepSeek-V4.1-Flash `text_config`) being skipped as DFlash / DSpark drafts
+- File speculators-format DFlash / DSpark drafts under the `dflash-` / `dspark-` prefix instead of `eagle3-`
+
 ## [1.14.0] - 2026-08-30
 
 ### Added
