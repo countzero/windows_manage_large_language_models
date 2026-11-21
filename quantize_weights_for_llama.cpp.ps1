@@ -135,7 +135,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
     # ("": "...") that ConvertFrom-Json rejects without it.
     $modelConfig = @{}
     if (Test-Path -Path $modelConfigPath) {
-        try { $modelConfig = Get-Content -Path $modelConfigPath -Raw | ConvertFrom-Json -AsHashtable } catch { }
+        try { $modelConfig = Get-Content -Path $modelConfigPath -Raw | ConvertFrom-Json -AsHashtable }
+        catch {
+            Write-Host "Cannot read ${modelConfigPath}: $($_.Exception.Message) Processing '${repositoryName}' as a full model, not as a draft." -ForegroundColor "Red"
+        }
     }
     if ($modelConfig -isnot [System.Collections.IDictionary]) { $modelConfig = @{} }
     $architecture = @($modelConfig['architectures'])[0]
@@ -162,7 +165,7 @@ ForEach ($repositoryName in $repositoryDirectories) {
         "dspark"
     } elseif ($architecture -match 'DFlash' -or $architecture -in 'MuseGlimmerAssistantModel', 'LiLiCorrDraftModel') {
         "dflash"
-    } elseif ($architecture -match 'Eagle3' -or ($architecture -eq 'LlamaForCausalLM' -and $modelConfig.Contains('draft_vocab_size'))) {
+    } elseif ($architecture -match 'Eagle3' -or ($modelConfig.Contains('draft_vocab_size') -and $modelConfig['num_hidden_layers'] -eq 1)) {
         "eagle3"
     }
 
