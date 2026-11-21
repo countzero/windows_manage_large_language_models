@@ -122,15 +122,28 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
     Write-Host "Working on ${repositoryName}..." -ForegroundColor "DarkYellow"
 
-    # A standalone draft model (MTP / NextN head) is recognised by its config.json:
-    # a draft architecture (*AssistantForCausalLM) or a backbone_hidden_size key.
-    # It is converted to a separate draft GGUF (no mmproj, no imatrix) and skips the
-    # main quantize path. The "mtp-" prefix marks it as a draft for llama.cpp:
+    # Classify on top-level config.json fields only: full models nest draft
+    # settings too (AGENTS.md).
+    #
+    # A standalone MTP / NextN head is converted to a separate draft GGUF (no mmproj,
+    # no imatrix) and skips the main quantize path. The "mtp-" prefix marks it as a
+    # draft for llama.cpp:
     #   llama-server -m <main>.gguf -md <this>.gguf --spec-type draft-mtp
     $modelConfigPath = Join-Path -Path $sourceDirectoryPath -ChildPath "config.json"
-    $modelConfigContent = if (Test-Path -Path $modelConfigPath) { Get-Content -Path $modelConfigPath -Raw } else { "" }
 
-    if ($modelConfigContent -match 'AssistantForCausalLM|backbone_hidden_size') {
+    # -AsHashtable: speculators configs carry an empty-string key in auto_map
+    # ("": "...") that ConvertFrom-Json rejects without it.
+    $modelConfig = @{}
+    if (Test-Path -Path $modelConfigPath) {
+        try { $modelConfig = Get-Content -Path $modelConfigPath -Raw | ConvertFrom-Json -AsHashtable }
+        catch {
+            Write-Host "Cannot read ${modelConfigPath}: $($_.Exception.Message) Processing '${repositoryName}' as a full model, not as a draft." -ForegroundColor "Red"
+        }
+    }
+    if ($modelConfig -isnot [System.Collections.IDictionary]) { $modelConfig = @{} }
+    $architecture = @($modelConfig['architectures'])[0]
+
+    if ($architecture -match 'AssistantForCausalLM$' -or $modelConfig.Contains('backbone_hidden_size')) {
 
         $draftModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "mtp-${repositoryName}.${draftQuantizationType}.gguf"
 
@@ -148,19 +161,15 @@ ForEach ($repositoryName in $repositoryDirectories) {
     # (--target-model-dir) for the target's tokenizer and layer/vocab counts. The kind
     # doubles as the file name prefix llama.cpp uses to discover a draft sidecar, and
     # names the --spec-type to run it with (draft-dflash / draft-dspark / draft-eagle3).
-    # DFlash is tested before EAGLE3 because a speculators-format DFlash carries both
-    # keys and belongs to the DFlash converter.
-    $draftKind = switch -Regex ($modelConfigContent) {
-        'target_layer_ids'   { if ($modelConfigContent -match 'dspark') { "dspark" } else { "dflash" }; break }
-        '"draft_vocab_size"' { "eagle3"; break }
-        default              { $null }
+    $draftKind = if ($architecture -match 'DSpark') {
+        "dspark"
+    } elseif ($architecture -match 'DFlash' -or $architecture -in 'MuseGlimmerAssistantModel', 'LiLiCorrDraftModel') {
+        "dflash"
+    } elseif ($architecture -match 'Eagle3' -or ($modelConfig.Contains('draft_vocab_size') -and $modelConfig['num_hidden_layers'] -eq 1)) {
+        "eagle3"
     }
 
     if ($draftKind) {
-
-        # -AsHashtable: speculators configs carry an empty-string key in auto_map
-        # ("": "...") that ConvertFrom-Json rejects without it.
-        $modelConfig = $modelConfigContent | ConvertFrom-Json -AsHashtable
 
         $draftModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${draftKind}-${repositoryName}.${draftQuantizationType}.gguf"
 
