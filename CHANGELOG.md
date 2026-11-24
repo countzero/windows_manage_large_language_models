@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.2] - 2026-11-24
+
 ### Fixed
 - Hide the GPUs during the CPU fallback of the importance matrix computation, which a CUDA build otherwise still fails with an out-of-memory error at `--gpu-layers 0` (e.g. Inkling-2-Mini)
 - Report a model that is quantized without an importance matrix instead of continuing silently
