@@ -268,17 +268,25 @@ ForEach ($repositoryName in $repositoryDirectories) {
                     --gpu-layers 999"
             }
 
-            # We are falling back to CPU only importance matrix generation.
+            # We are falling back to CPU only importance matrix generation. The GPUs
+            # are hidden because a CUDA build still allocates compute buffers on them
+            # at --gpu-layers 0 (https://github.com/ggml-org/llama.cpp/issues/32910).
             if (!(Test-Path -Path $importanceMatrixPath)) {
 
                 Write-Host "Computing importance matrix for ${unquantizedModelPath} at ${importanceMatrixPath} on CPU..." -ForegroundColor "DarkYellow"
 
-                Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
-                    --model '${unquantizedModelPath}' ``
-                    --file '${trainingDataPath}' ``
-                    --chunks ${trainingDataChunks} ``
-                    --output '${importanceMatrixPath}' ``
-                    --gpu-layers 0"
+                $visibleDevices = $env:CUDA_VISIBLE_DEVICES
+                $env:CUDA_VISIBLE_DEVICES = "-1"
+                try {
+                    Invoke-Expression "${llamaCppDirectory}\build\bin\Release\llama-imatrix.exe ``
+                        --model '${unquantizedModelPath}' ``
+                        --file '${trainingDataPath}' ``
+                        --chunks ${trainingDataChunks} ``
+                        --output '${importanceMatrixPath}' ``
+                        --gpu-layers 0"
+                } finally {
+                    $env:CUDA_VISIBLE_DEVICES = $visibleDevices
+                }
             }
 
             # llama-imatrix does not traverse MTP / NextN blocks during a standard
@@ -314,6 +322,9 @@ ForEach ($repositoryName in $repositoryDirectories) {
                     $rules | ForEach-Object { Write-Host "  override: $_" -ForegroundColor "DarkGray" }
                     $missingImatrixOverrides = ($rules | ForEach-Object { "--tensor-type '$_'" }) -join " "
                 }
+            } else {
+
+                Write-Host "No importance matrix for '${repositoryName}': both imatrix runs failed, so ${repositoryName} is quantized without one. Its quantizations are lower quality, and i-quants below IQ4 may abort. Delete the affected GGUFs in ${targetDirectoryPath} and re-run once the cause above is fixed." -ForegroundColor "Red"
             }
 
             ForEach ($type in $pendingTypes) {
