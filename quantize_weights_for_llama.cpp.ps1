@@ -173,6 +173,10 @@ ForEach ($repositoryName in $repositoryDirectories) {
 
         $draftModelPath = Join-Path -Path $targetDirectoryPath -ChildPath "${draftKind}-${repositoryName}.${draftQuantizationType}.gguf"
 
+        if (Test-Path -Path $draftModelPath) {
+            continue
+        }
+
         $targetRepositoryName = Resolve-DraftTargetRepository -RepositoryName $repositoryName -ModelConfig $modelConfig
 
         if (!$targetRepositoryName) {
@@ -185,14 +189,11 @@ ForEach ($repositoryName in $repositoryDirectories) {
             continue
         }
 
-        if (!(Test-Path -Path $draftModelPath)) {
+        $targetModelDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $targetRepositoryName
 
-            $targetModelDirectoryPath = Join-Path -Path $sourceDirectory -ChildPath $targetRepositoryName
+        Write-Host "Converting $($draftKind.ToUpper()) draft ${sourceDirectoryPath} to ${draftModelPath} (${draftQuantizationType}, target ${targetRepositoryName})..." -ForegroundColor "DarkYellow"
 
-            Write-Host "Converting $($draftKind.ToUpper()) draft ${sourceDirectoryPath} to ${draftModelPath} (${draftQuantizationType}, target ${targetRepositoryName})..." -ForegroundColor "DarkYellow"
-
-            Convert-StandaloneDraft -SourceDirectoryPath $sourceDirectoryPath -OutputPath $draftModelPath -QuantizationType $draftQuantizationType -TargetModelDir $targetModelDirectoryPath
-        }
+        Convert-StandaloneDraft -SourceDirectoryPath $sourceDirectoryPath -OutputPath $draftModelPath -QuantizationType $draftQuantizationType -TargetModelDir $targetModelDirectoryPath
 
         continue
     }
