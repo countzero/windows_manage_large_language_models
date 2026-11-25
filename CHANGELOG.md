@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.3] - 2026-11-25
+
+### Fixed
+- Stop reporting an already converted EAGLE3 / DFlash / DSpark draft as skipped when its target model is no longer in SOURCE_DIRECTORY
+
 ## [1.14.2] - 2026-11-24
 
 ### Fixed
